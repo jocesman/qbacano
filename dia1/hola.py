@@ -1,3 +1,4 @@
 print("Hola, estoy retomando programación")
 nombre = input('Cómo te llamas?')
-print ('Bienvenido,', nombre)
+edad = input('Que edad tienes?')
+print ('Bienvenido,', nombre, 'tu edad es', edad)
