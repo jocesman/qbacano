@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Prevenir zoom y asegurar viewport correcto -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Sabores Q'Bacano - Empanadas, Salchipapas y Postres</title>
+  <meta name="description" content="Empanadas, salchipapas y postres artesanales. Pedidos por WhatsApp, delivery y pago online.">
+  <meta name="theme-color" content="#d35400">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="img/logo.png">
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/jpeg" href="img/logo.png">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="#menu" class="brand">
+      <img src="img/logo.png" alt="Logo de Sabores Q'Bacano" class="imagenqbacano" width="50" height="50">
+      <span class="logo-text">Sabores Q'Bacano</span>
+    </a>
+    <nav aria-label="Navegación principal">
+      <a href="#menu">Menú</a>
+      <a href="#postres">Postres</a>
+      <a href="#ubicacion">Ubicación</a>
+      <a href="#pedido">Pedir</a>
+      <button id="adminToggle" class="admin-btn" type="button" title="Modo Administrador">🔒</button>
+    </nav>
+  </header>
+
+  <!-- Panel de Admin (Oculto por defecto) -->
+  <div id="adminPanel" class="admin-panel hidden">
+    <div class="admin-header">
+      <h3>🔧 Panel de Control</h3>
+      <button id="closeAdmin" class="close-btn">×</button>
+    </div>
+    <p>Activa/desactiva, agrega, modifica o elimina productos desde aquí. Los cambios se guardan automáticamente en este dispositivo.</p>
+    <div class="admin-controls">
+      <label class="switch">
+        <input type="checkbox" id="globalToggle">
+        <span class="slider"></span>
+      </label>
+      <span>Mostrar todos los productos</span>
+    </div>
+    <form id="productForm" class="admin-form">
+      <h4 id="formTitle">Agregar nuevo producto</h4>
+      <input type="hidden" id="productId" value="">
+      <label>
+        Categoría
+        <select id="productCategory">
+          <option value="empanadas">Empanadas</option>
+          <option value="salchipapas">Salchipapas</option>
+          <option value="postres">Postres</option>
+        </select>
+      </label>
+      <label>
+        Nombre
+        <input type="text" id="productName" required>
+      </label>
+      <label>
+        Descripción
+        <textarea id="productDescription" rows="2" required></textarea>
+      </label>
+      <label>
+        Precio
+        <input type="number" id="productPrice" min="0" step="0.01" required>
+      </label>
+      <label>
+        Imagen URL
+        <input type="url" id="productImage" placeholder="https://...">
+      </label>
+      <label class="admin-switch">
+        <input type="checkbox" id="productAvailable" checked>
+        Disponible
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar producto</button>
+        <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
+      </div>
+    </form>
+    <div id="adminProductList" class="admin-product-list"></div>
+  </div>
+
+  <main>
+    <!-- Hero -->
+  <section class="hero">
+    <h1>Empanadas, salchipapas y postres con sabor casero</h1>
+    <p>Masa crujiente, papas doradas y postres irresistibles. ¡Hecho con amor, directo a tu mesa!</p>
+    <div class="hero-buttons">
+      <a href="#menu" class="btn btn-primary">Ver Menú</a>
+      <a href="#pedido" class="btn btn-secondary">Ordenar Ahora</a>
+    </div>
+  </section>
+
+  <!-- Menú Principal -->
+  <section id="menu">
+    <h2 class="section-title">🥟 Empanadas Artesanales</h2>
+    <div id="empanadasGrid" class="menu-grid"></div>
+
+    <h2 class="section-title" style="margin-top: 3rem;">🍟 Salchipapas Q'Bacano</h2>
+    <div id="salchipapasGrid" class="menu-grid"></div>
+  </section>
+
+  <!-- SECCIÓN DE POSTRES -->
+  <section id="postres" class="postres-section">
+    <h2 class="section-title">🍰 Postres Caseros</h2>
+    <div id="postresGrid" class="menu-grid"></div>
+  </section>
+
+  <!-- UBICACIÓN CON MAPA -->
+  <!-- UBICACIÓN CON MAPA -->
+<section id="ubicacion" class="ubicacion-section">
+  <h2 class="section-title">📍 Visítanos</h2>
+  <div class="map-container">
+    <iframe 
+      src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d1876.2915445988797!2d-90.48775966185286!3d19.857585818106095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDUxJzI3LjMiTiA5MMKwMjknMTEuMyJX!5e0!3m2!1ses!2smx!4v1775332812232!5m2!1ses!2smx" 
+      width="100%" 
+      height="450" 
+      style="border:0; border-radius: 12px;" 
+      allowfullscreen="" 
+      loading="lazy" 
+      referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+  </div>
+  <div class="location-info">
+    <h3>🏪 Sabores Q'Bacano</h3>
+    <p><strong>Dirección:</strong> Calle Revellin #6-24, San Francisco de Campeche - Campeche</p>
+    <p><strong>Horario:</strong></p>
+    <p class="horario-detalle">📅 Lunes a Viernes<br>🕐 8:00 am a 5:00 pm y de 8:00 pm a 11:00 pm</p>
+    <p class="horario-detalle">📅 Sábados y Domingos<br>🕐 2:00 pm a 11:00 pm</p>
+    <p><strong>Teléfono:</strong> <a href="tel:+529812100778">+52 981 210 07 78</a></p>
+  </div>
+</section>
+
+  <!-- PEDIDOS Y PAGOS -->
+  <section id="pedido" class="pedido-section">
+    <h2 class="section-title">🛒 Tu Pedido</h2>
+    
+    <!-- Carrito -->
+    <div id="cart" class="cart-container">
+      <div class="cart-empty">Tu carrito está vacío. ¡Agrega productos del menú!</div>
+      <div id="cartItems" class="cart-items hidden"></div>
+      <div id="cartTotal" class="cart-total hidden">
+        <h3>Total: $<span id="totalAmount">0.00</span></h3>
+      </div>
+    </div>
+
+    <!-- Métodos de Pedido -->
+    <div id="paymentMethods" class="payment-methods hidden">
+      <h3>📱 Pedido por WhatsApp</h3>
+      
+      <div class="payment-options">
+        <!-- Mercado Pago -->
+        <div class="payment-card">
+          <h4>Mercado Pago</h4>
+          <p class="coming-soon">Habilitado próximamente.</p>
+          <button type="button" class="btn-payment btn-mercadopago" disabled>
+            Próximamente
+          </button>
+        </div>
+
+        <!-- PayPal -->
+        <div class="payment-card">
+          <h4>PayPal</h4>
+          <p class="coming-soon">Habilitado próximamente.</p>
+          <button type="button" class="btn-payment btn-paypal" disabled>
+            Próximamente
+          </button>
+        </div>
+
+        <!-- Pedido por WhatsApp -->
+        <div class="payment-card">
+          <h4>Pedido por WhatsApp</h4>
+          <p>Haz tu pedido directo al WhatsApp de Q'Bacano.</p>
+          <a id="paymentWhatsAppBtn" href="#" class="btn btn-whatsapp" target="_blank">
+            Enviar pedido por WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-form contact-info">
+      <h4>Datos de contacto</h4>
+      <label>
+        Nombre completo
+        <input type="text" id="customerName" placeholder="Tu nombre" required>
+      </label>
+      <label>
+        Teléfono / WhatsApp
+        <input type="tel" id="customerPhone" placeholder="+52 981 210 07 78">
+      </label>
+      <label>
+        Dirección de entrega
+        <textarea id="customerAddress" rows="2" placeholder="Calle, colonia, número, referencia"></textarea>
+      </label>
+    </div>
+
+    <!-- Botón WhatsApp final -->
+    <div id="whatsappOrder" class="whatsapp-order hidden">
+      <a id="whatsappLink" href="#" class="btn btn-whatsapp" target="_blank">
+        📱 Confirmar pedido por WhatsApp
+      </a>
+    </div>
+  </section>
+
+  <!-- Instalación PWA -->
+  <div id="installPrompt" class="install-prompt hidden">
+    <div class="prompt-content">
+      <p>📲 Instala Sabores Q'Bacano en tu dispositivo</p>
+      <div class="prompt-buttons">
+        <button type="button" class="btn btn-primary" data-action="install-pwa">Instalar</button>
+        <button type="button" class="btn btn-secondary" data-action="close-install">Ahora no</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de PayPal -->
+  <div id="paypal-modal" class="paypal-modal" style="display: none;">
+    <div class="paypal-modal-content">
+      <button class="paypal-close-btn" data-action="close-paypal-modal">×</button>
+      <div class="paypal-modal-header">
+        <h3>Pagar con PayPal</h3>
+        <p>Completa tu pago de forma segura</p>
+      </div>
+      <div id="paypal-button-container" class="paypal-button-container"></div>
+    </div>
+  </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>© 2026 Sabores Q'Bacano | Todos los derechos reservados</p>
+      <p class="footer-contact">
+        <a href="tel:+529812100778">📞 +52 981 210 07 78</a> 
+        <span class="separator">|</span> 
+        <a href="mailto:hola@saboresqbacano.com">📧 hola@saboresqbacano.com</a>
+      </p>
+      <p class="footer-social">📍 Síguenos: @sabores.qbacano</p>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

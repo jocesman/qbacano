@@ -1,0 +1,26 @@
+{
+  "name": "Sabores Q'Bacano",
+  "short_name": "Q'Bacano",
+  "description": "Empanadas, salchipapas y postres artesanales",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#fdf6ed",
+  "theme_color": "#d35400",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "img/LOGO.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/LOGO.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "restaurant"],
+  "lang": "es-ES"
+}
