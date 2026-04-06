@@ -180,7 +180,7 @@
         <div class="payment-card">
           <h4>Pedido por WhatsApp</h4>
           <p>Haz tu pedido directo al WhatsApp de Q'Bacano.</p>
-          <a id="paymentWhatsAppBtn" href="#" class="btn btn-whatsapp" target="_blank">
+          <a id="paymentWhatsAppBtn" data-action="whatsapp-order" href="#" class="btn btn-whatsapp" target="_blank">
             Enviar pedido por WhatsApp
           </a>
         </div>
@@ -205,11 +205,22 @@
 
     <!-- Botón WhatsApp final -->
     <div id="whatsappOrder" class="whatsapp-order hidden">
-      <a id="whatsappLink" href="#" class="btn btn-whatsapp" target="_blank">
+      <a id="whatsappLink" data-action="whatsapp-order" href="#" class="btn btn-whatsapp" target="_blank">
         📱 Confirmar pedido por WhatsApp
       </a>
     </div>
   </section>
+
+  <div id="whatsapp-confirm-modal" class="confirm-modal hidden">
+    <div class="confirm-modal-content">
+      <h3>Confirma tu pedido</h3>
+      <p id="whatsapp-confirm-message">Revisa tus datos y confirma para enviar el pedido por WhatsApp.</p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" data-action="cancel-whatsapp">Cancelar</button>
+        <button type="button" class="btn btn-primary" data-action="confirm-whatsapp">Hacer pedido</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Instalación PWA -->
   <div id="installPrompt" class="install-prompt hidden">

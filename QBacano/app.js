@@ -383,6 +383,72 @@ function updateWhatsAppLink(total) {
   }
 }
 
+function isContactDataValid() {
+  const name = getElement('customerName')?.value.trim();
+  const phone = getElement('customerPhone')?.value.trim();
+  const address = getElement('customerAddress')?.value.trim();
+  return Boolean(name && phone && address);
+}
+
+function getContactValidationMessage() {
+  const missing = [];
+  const name = getElement('customerName')?.value.trim();
+  const phone = getElement('customerPhone')?.value.trim();
+  const address = getElement('customerAddress')?.value.trim();
+
+  if (!name) missing.push('Nombre');
+  if (!phone) missing.push('Teléfono / WhatsApp');
+  if (!address) missing.push('Dirección');
+
+  return missing.length
+    ? `Faltan datos: ${missing.join(', ')}. Completa los campos antes de enviar.`
+    : 'Revisa tu pedido y confirma para enviarlo por WhatsApp.';
+}
+
+function openWhatsAppConfirmModal() {
+  const modal = getElement('whatsapp-confirm-modal');
+  const message = getElement('whatsapp-confirm-message');
+  if (!modal || !message) return;
+  message.textContent = getContactValidationMessage();
+  modal.classList.remove('hidden');
+}
+
+function closeWhatsAppConfirmModal() {
+  const modal = getElement('whatsapp-confirm-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleWhatsAppOrder(event) {
+  event.preventDefault();
+  if (cart.length === 0) {
+    alert('Tu carrito está vacío');
+    return;
+  }
+  openWhatsAppConfirmModal();
+}
+
+function handleWhatsAppConfirm() {
+  if (!isContactDataValid()) {
+    const message = getElement('whatsapp-confirm-message');
+    if (message) {
+      message.textContent = getContactValidationMessage();
+    }
+    showNotification('Por favor completa los datos de contacto antes de enviar.');
+    return;
+  }
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  updateWhatsAppLink(total);
+
+  const whatsappLink = getElement('whatsappLink');
+  if (whatsappLink) {
+    window.open(whatsappLink.href, '_blank');
+    showNotification('Abriendo WhatsApp...');
+  }
+
+  closeWhatsAppConfirmModal();
+}
+
 async function toggleProduct(productId) {
   const product = products.find(item => item.id === productId);
   if (!product) return;
@@ -582,6 +648,12 @@ function setupMenuEvents() {
       deleteProduct(productId);
     } else if (action === 'pay') {
       handlePayment(method);
+    } else if (action === 'whatsapp-order') {
+      handleWhatsAppOrder(event);
+    } else if (action === 'confirm-whatsapp') {
+      handleWhatsAppConfirm();
+    } else if (action === 'cancel-whatsapp') {
+      closeWhatsAppConfirmModal();
     } else if (action === 'close-paypal-modal') {
       closePayPalModal();
     } else if (action === 'install-pwa') {
