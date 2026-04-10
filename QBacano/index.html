@@ -59,6 +59,8 @@
           <option value="empanadas">Empanadas</option>
           <option value="salchipapas">Salchipapas</option>
           <option value="postres">Postres</option>
+          <option value="extras">Extras</option>
+          <option value="bebidas">Bebidas</option>
         </select>
       </label>
       <label>
@@ -77,16 +79,33 @@
         Imagen URL
         <input type="url" id="productImage" placeholder="https://...">
       </label>
-      <label class="admin-switch">
-        <input type="checkbox" id="productAvailable" checked>
-        Disponible
-      </label>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Guardar producto</button>
-        <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
+      <div class="form-group">
+      <label>Opciones del producto</label>
+      
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <input type="checkbox" id="productAvailable">
+          <span>Disponible</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" id="is_combo">
+          <span>Es combo 🔥</span>
+        </label>
+      </div>
+    </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Guardar producto</button>
+          <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
       </div>
     </form>
     <div id="adminProductList" class="admin-product-list"></div>
+    <!-- NUEVO: Botón y contenedor de estadísticas -->
+    <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <button type="button" id="viewStatsBtn" class="btn btn-secondary" style="width:100%">📊 Ver Estadísticas e Historial</button>
+    </div>
+    <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
+        <!-- Las estadísticas se renderizan aquí -->
+    </div>
   </div>
 
   <main>
@@ -114,31 +133,6 @@
     <h2 class="section-title">🍰 Postres Caseros</h2>
     <div id="postresGrid" class="menu-grid"></div>
   </section>
-
-  <!-- UBICACIÓN CON MAPA -->
-  <!-- UBICACIÓN CON MAPA -->
-<section id="ubicacion" class="ubicacion-section">
-  <h2 class="section-title">📍 Visítanos</h2>
-  <div class="map-container">
-    <iframe 
-      src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d1876.2915445988797!2d-90.48775966185286!3d19.857585818106095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDUxJzI3LjMiTiA5MMKwMjknMTEuMyJX!5e0!3m2!1ses!2smx!4v1775332812232!5m2!1ses!2smx" 
-      width="100%" 
-      height="450" 
-      style="border:0; border-radius: 12px;" 
-      allowfullscreen="" 
-      loading="lazy" 
-      referrerpolicy="no-referrer-when-downgrade">
-    </iframe>
-  </div>
-  <div class="location-info">
-    <h3>🏪 Sabores Q'Bacano</h3>
-    <p><strong>Dirección:</strong> Calle Revellin #6-24, San Francisco de Campeche - Campeche</p>
-    <p><strong>Horario:</strong></p>
-    <p class="horario-detalle">📅 Lunes a Viernes<br>🕐 8:00 am a 5:00 pm y de 8:00 pm a 11:00 pm</p>
-    <p class="horario-detalle">📅 Sábados y Domingos<br>🕐 2:00 pm a 11:00 pm</p>
-    <p><strong>Teléfono:</strong> <a href="tel:+529812100778">+52 981 210 07 78</a></p>
-  </div>
-</section>
 
   <!-- PEDIDOS Y PAGOS -->
   <section id="pedido" class="pedido-section">
@@ -187,37 +181,43 @@
       </div>
     </div>
 
-    <div class="admin-form contact-info">
-      <h4>Datos de contacto</h4>
-      <label>
-        Nombre completo
-        <input type="text" id="customerName" placeholder="Tu nombre" required>
-      </label>
-      <label>
-        Teléfono / WhatsApp
-        <input type="tel" id="customerPhone" placeholder="+52 981 210 07 78">
-      </label>
-      <label>
-        Dirección de entrega
-        <textarea id="customerAddress" rows="2" placeholder="Calle, colonia, número, referencia"></textarea>
-      </label>
-    </div>
-
-    <!-- Botón WhatsApp final -->
-    <div id="whatsappOrder" class="whatsapp-order hidden">
-      <a id="whatsappLink" data-action="whatsapp-order" href="#" class="btn btn-whatsapp" target="_blank">
-        📱 Confirmar pedido por WhatsApp
-      </a>
-    </div>
+    <p class="pedido-note">Tu pedido se completa al enviar los datos por WhatsApp.</p>
   </section>
 
   <div id="whatsapp-confirm-modal" class="confirm-modal hidden">
     <div class="confirm-modal-content">
-      <h3>Confirma tu pedido</h3>
-      <p id="whatsapp-confirm-message">Revisa tus datos y confirma para enviar el pedido por WhatsApp.</p>
+      <div class="modal-header-logo">
+        <img src="img/logo.png" alt="Logo Sabores Q'Bacano">
+        <span>Sabores Q'Bacano</span>
+      </div>
+      <h3>Finaliza tu pedido por WhatsApp</h3>
+      <p id="whatsapp-confirm-message">Completa los datos y revisa tu pedido antes de enviar.</p>
+
+      <div class="modal-group">
+        <h4>Datos de contacto</h4>
+        <label>
+          Nombre completo
+          <input type="text" id="customerName" placeholder="Tu nombre" required>
+        </label>
+        <label>
+          Teléfono / WhatsApp
+          <input type="tel" id="customerPhone" placeholder="+52 981 210 07 78">
+        </label>
+        <label>
+          Dirección de entrega
+          <textarea id="customerAddress" rows="2" placeholder="Calle, colonia, número, referencia"></textarea>
+        </label>
+      </div>
+
+      <div class="order-summary">
+        <h4>Resumen del pedido</h4>
+        <ul id="whatsapp-order-summary"></ul>
+        <p class="summary-total">Total: $<span id="whatsapp-summary-total">0.00</span></p>
+      </div>
+
       <div class="confirm-modal-actions">
         <button type="button" class="btn btn-secondary" data-action="cancel-whatsapp">Cancelar</button>
-        <button type="button" class="btn btn-primary" data-action="confirm-whatsapp">Hacer pedido</button>
+        <button type="button" class="btn btn-primary" data-action="confirm-whatsapp">Enviar por WhatsApp</button>
       </div>
     </div>
   </div>
@@ -248,15 +248,50 @@
   </main>
 
   <!-- Footer -->
+  <section id="ubicacion" class="ubicacion-section">
+    <h2 class="section-title">📍 Visítanos</h2>
+    <div class="ubicacion-grid">
+      <div class="schedule-panel">
+        <h3>Horario de atención</h3>
+        <p class="horario-detalle">📅 Lunes a Viernes<br>🕐 8:00 am a 5:00 pm y de 8:00 pm a 11:00 pm</p>
+        <p class="horario-detalle">📅 Sábados y Domingos<br>🕐 2:00 pm a 11:00 pm</p>
+        <div class="location-info">
+          <h3>🏪 Sabores Q'Bacano</h3>
+          <p><strong>Dirección:</strong> Calle Revellin #6-24, San Francisco de Campeche - Campeche</p>
+          <p><strong>Teléfono:</strong> <a href="tel:+529812100778">+52 981 210 07 78</a></p>
+        </div>
+      </div>
+      <div class="map-panel">
+        <iframe 
+          src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d1876.2915445988797!2d-90.48775966185286!3d19.857585818106095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTnCsDUxJzI3LjMiTiA5MMKwMjknMTEuMyJX!5e0!3m2!1ses!2smx!4v1775332812232!5m2!1ses!2smx" 
+          width="100%" 
+          height="420" 
+          style="border:0; border-radius: 18px;" 
+          allowfullscreen="" 
+          loading="lazy" 
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <div class="footer-content">
-      <p>© 2026 Sabores Q'Bacano | Todos los derechos reservados</p>
-      <p class="footer-contact">
-        <a href="tel:+529812100778">📞 +52 981 210 07 78</a> 
-        <span class="separator">|</span> 
-        <a href="mailto:qbacano4@gmail.com">📧 qbacano4@gmail.com</a>
-      </p>
-      <p class="footer-social">📍 Síguenos: @sabores.qbacano</p>
+      <div class="footer-brand">
+        <img src="img/logo.png" alt="Logo Sabores Q'Bacano" class="footer-logo">
+        <div>
+          <p>Sabores Q'Bacano</p>
+          <p>© 2026. Todos los derechos reservados.</p>
+        </div>
+      </div>
+      <div class="footer-details">
+        <p class="footer-contact">
+          <a href="tel:+529812100778">📞 +52 981 210 07 78</a>
+          <span class="separator">|</span>
+          <a href="mailto:qbacano4@gmail.com">📧 qbacano4@gmail.com</a>
+        </p>
+        <p class="footer-social">Síguenos: @sabores.qbacano</p>
+      </div>
     </div>
   </footer>
 
