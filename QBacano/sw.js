@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qbacano-v1';
+const CACHE_NAME = 'qbacano-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ self.addEventListener('install', event => {
         console.log('Cache abierto');
         return cache.addAll(urlsToCache);
       })
+      .catch(err => console.error('Error cacheando:', err))
   );
 });
 
@@ -26,6 +27,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Eliminando cache antiguo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -34,15 +36,55 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch
+// Fetch: Priorizar red para HTML, cache para assets
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
+  // Si es una página HTML, ir primero a red
+  if (event.request.destination === 'document' || 
+      event.request.url.endsWith('.html') ||
+      event.request.url.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clonar y guardar en cache si es válido
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
-        }
-        return fetch(event.request);
-      })
-  );
+        })
+        .catch(() => {
+          // Si falla, servir desde cache
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Para assets (CSS, JS, imágenes), cache first
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request)
+            .then(networkResponse => {
+              // Guardar en cache si es válido
+              if (networkResponse && networkResponse.status === 200) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, responseClone);
+                });
+              }
+              return networkResponse;
+            })
+            .catch(() => {
+              // Fallback para imágenes rotas
+              if (event.request.destination === 'image') {
+                return caches.match('/img/LOGO.jpg');
+              }
+            });
+        })
+    );
+  }
 });
