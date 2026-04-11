@@ -103,9 +103,49 @@
     <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
         <button type="button" id="viewStatsBtn" class="btn btn-secondary" style="width:100%">📊 Ver Estadísticas e Historial</button>
     </div>
-    <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
-        <!-- Las estadísticas se renderizan aquí -->
-    </div>
+      <!-- Contenedor Principal -->
+      <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
+          
+          <!-- 1. PANEL DE FILTROS (Estático: No se borra al actualizar datos) -->
+          <div class="filters-panel">
+              <h4 style="margin-bottom: 1rem; color: var(--primary);">🔍 Filtros</h4>
+              
+              <!-- Filtro por Estado -->
+              <div class="filter-group">
+                  <label>Estado del pedido:</label>
+                  <div class="filter-buttons">
+                      <button type="button" class="filter-btn active" data-filter-status="all">🔄 Todos</button>
+                      <button type="button" class="filter-btn" data-filter-status="delivered">✅ Entregados</button>
+                      <button type="button" class="filter-btn" data-filter-status="pending">⏳ Pendientes</button>
+                      <button type="button" class="filter-btn" data-filter-status="confirmed">🔔 Confirmados</button>
+                      <button type="button" class="filter-btn" data-filter-status="cancelled">❌ Cancelados</button>
+                  </div>
+              </div>
+              
+              <!-- Filtro por Fecha -->
+              <div class="filter-group">
+                  <label>Rango de fechas:</label>
+                  <div class="date-filters">
+                      <div class="date-input-group">
+                          <label for="filterDateFrom">Desde:</label>
+                          <input type="date" id="filterDateFrom" class="date-input">
+                      </div>
+                      <div class="date-input-group">
+                          <label for="filterDateTo">Hasta:</label>
+                          <input type="date" id="filterDateTo" class="date-input">
+                      </div>
+                      <button type="button" id="clearDateFilter" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">🗑️ Limpiar</button>
+                  </div>
+              </div>
+              
+              <!-- Botón Aplicar -->
+              <button type="button" id="applyFilters" class="btn btn-primary" style="width: 100%;">🔎 Aplicar Filtros</button>
+          </div>
+
+          <!-- 2. SALIDA DE ESTADÍSTICAS (Dinámico: Aquí se dibujan los resultados) -->
+          <div id="statsOutput"></div>
+
+      </div>
   </div>
 
   <main>

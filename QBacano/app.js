@@ -460,27 +460,27 @@ function updateWhatsAppLink(total) {
   const customerAddress = getElement('customerAddress')?.value.trim() || 'No especificado';
   const items = cart.map(item => `${item.quantity}x ${item.name} ($${(item.price * item.quantity).toFixed(2)})`).join('\n');
 
-  const message = ` *Nuevo pedido - Q'Bacano* 
-    - Nombre: ${customerName}
-    - Teléfono: ${customerPhone}
-    - Dirección: ${customerAddress}
+  // 🚚 Mensaje actualizado con nota de envío
+  const message = `📦 *Nuevo pedido - Q'Bacano*
+                    - Nombre: ${customerName}
+                    - Teléfono: ${customerPhone}
+                    - Dirección: ${customerAddress}
+                    - *Pedido:*
+                       ${items}
 
-    - *Pedido:*
-      ${items}
+                    *Total productos: $${total.toFixed(2)}*
+                    *Envío:* Costo adicional según distancia (Servicio de Mandadito)
 
-    *Total: $${total.toFixed(2)}*
+                    _Listo para confirmar_`;
 
-    _Listo para confirmar_`;
   const businessPhone = '529812100778';
   const waUrl = `https://wa.me/${businessPhone}?text=${encodeURIComponent(message)}`;
+  
   const whatsappLink = getElement('whatsappLink');
-  if (whatsappLink) {
-    whatsappLink.href = waUrl;
-  }
+  if (whatsappLink) whatsappLink.href = waUrl;
+  
   const paymentWhatsAppBtn = getElement('paymentWhatsAppBtn');
-  if (paymentWhatsAppBtn) {
-    paymentWhatsAppBtn.href = waUrl;
-  }
+  if (paymentWhatsAppBtn) paymentWhatsAppBtn.href = waUrl;
 }
 
 function isContactDataValid() {
@@ -665,11 +665,6 @@ async function handleProductFormSubmit(event) {
     return;
   }
 
-  console.log('DATA A GUARDAR:', {
-    available,
-    is_combo
-  });
-
   try {
     if (id) {
       await updateProductInDB({
@@ -771,15 +766,16 @@ function setupAdminPanel() {
   });
 
   // Botón de estadísticas
-  const viewStatsBtn = getElement('viewStatsBtn');
-  if (viewStatsBtn) {
-    viewStatsBtn.addEventListener('click', () => {
-      const container = getElement('adminStatsContainer');
-      container.classList.toggle('hidden');
-      if (!container.classList.contains('hidden')) {
-        loadAdminStats();
-      }
-    });
+    const viewStatsBtn = getElement('viewStatsBtn');
+    if (viewStatsBtn) {
+      viewStatsBtn.addEventListener('click', () => {
+        const container = getElement('adminStatsContainer');
+        container.classList.toggle('hidden');
+        if (!container.classList.contains('hidden')) {
+          setupAdminFilters(); // Inicializar filtros la primera vez
+          loadAdminStats(currentFilters);
+        }
+      });
   }
 
   // Delegación de eventos para cambios de estado
@@ -1131,114 +1127,75 @@ document.addEventListener('keypress', () => {
 
 function showExtrasModal(extras) {
   return new Promise((resolve) => {
-    // Crear elementos del modal
     const modal = document.createElement('div');
     modal.className = 'extras-modal';
-    modal.style.cssText = `
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      padding: 1rem;
-    `;
-    
+    modal.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 1rem;`;
+
     const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 500px;
-      width: 100%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    `;
-    
-    // Título
+    modalContent.style.cssText = `background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);`;
+
     const title = document.createElement('h3');
     title.textContent = '🔥 ¿Quieres agregar algo más?';
     title.style.cssText = 'margin-bottom: 1.5rem; color: var(--primary); font-size: 1.5rem;';
-    
-    // Lista de checkboxes
+
     const list = document.createElement('div');
     list.style.cssText = 'margin-bottom: 1.5rem;';
-    
+
     extras.forEach((extra, index) => {
+      const isAvailable = extra.available !== false; // Por defecto disponible si no está marcado como false
+      
       const item = document.createElement('label');
       item.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        background: #f8f9fa;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 2px solid transparent;
+        display: flex; align-items: center; gap: 1rem; padding: 1rem; margin-bottom: 0.75rem; 
+        background: ${isAvailable ? '#f8f9fa' : '#f0f0f0'}; 
+        border-radius: 10px; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; 
+        transition: all 0.2s; border: 2px solid ${isAvailable ? 'transparent' : '#ddd'}; 
+        opacity: ${isAvailable ? '1' : '0.6'};
       `;
-      
-      item.onmouseenter = () => item.style.borderColor = 'var(--primary)';
-      item.onmouseleave = () => item.style.borderColor = 'transparent';
-      
+
+      if (isAvailable) {
+        item.onmouseenter = () => item.style.borderColor = 'var(--primary)';
+        item.onmouseleave = () => item.style.borderColor = 'transparent';
+      }
+
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.value = index;
       checkbox.style.cssText = 'width: 20px; height: 20px; cursor: pointer;';
-      
+      if (!isAvailable) {
+        checkbox.disabled = true;
+        checkbox.style.cursor = 'not-allowed';
+      }
+
       const info = document.createElement('div');
       info.style.cssText = 'flex: 1;';
-      
+
       const name = document.createElement('div');
-      name.textContent = extra.name;
-      name.style.cssText = 'font-weight: 600; color: var(--dark);';
-      
+      name.textContent = `${extra.name}${!isAvailable ? ' 🚫 Agotado' : ''}`;
+      name.style.cssText = `font-weight: 600; color: ${isAvailable ? 'var(--dark)' : '#999'};`;
+
       const price = document.createElement('div');
-      price.textContent = `+$${extra.price.toFixed(2)}`;
-      price.style.cssText = 'color: var(--primary); font-weight: 700;';
-      
+      price.textContent = isAvailable ? `+$${extra.price.toFixed(2)}` : 'No disponible';
+      price.style.cssText = `color: ${isAvailable ? 'var(--primary)' : '#999'}; font-weight: 700;`;
+
       info.appendChild(name);
       info.appendChild(price);
       item.appendChild(checkbox);
       item.appendChild(info);
       list.appendChild(item);
     });
-    
-    // Botones
+
     const buttons = document.createElement('div');
     buttons.style.cssText = 'display: flex; gap: 1rem; justify-content: flex-end;';
-    
+
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancelar';
-    cancelBtn.style.cssText = `
-      padding: 0.75rem 1.5rem;
-      border: 2px solid #ddd;
-      background: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    `;
-    cancelBtn.onclick = () => {
-      modal.remove();
-      resolve([]);
-    };
-    
+    cancelBtn.style.cssText = `padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;`;
+    cancelBtn.onclick = () => { modal.remove(); resolve([]); };
+
     const confirmBtn = document.createElement('button');
     confirmBtn.textContent = 'Agregar seleccionados';
-    confirmBtn.style.cssText = `
-      padding: 0.75rem 1.5rem;
-      background: var(--success);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    `;
+    confirmBtn.style.cssText = `padding: 0.75rem 1.5rem; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;`;
     confirmBtn.onmouseenter = () => confirmBtn.style.background = '#219a52';
     confirmBtn.onmouseleave = () => confirmBtn.style.background = 'var(--success)';
     confirmBtn.onclick = () => {
@@ -1247,23 +1204,17 @@ function showExtrasModal(extras) {
       modal.remove();
       resolve(selected);
     };
-    
+
     buttons.appendChild(cancelBtn);
     buttons.appendChild(confirmBtn);
-    
-    // Ensamblar modal
     modalContent.appendChild(title);
     modalContent.appendChild(list);
     modalContent.appendChild(buttons);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
-    
-    // Cerrar al hacer clic fuera
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        modal.remove();
-        resolve([]);
-      }
+
+    modal.onclick = (e) => { 
+      if (e.target === modal) { modal.remove(); resolve([]); } 
     };
   });
 }
@@ -1302,36 +1253,75 @@ async function saveOrderToSupabase() {
   }
 }
 
+// ===== VARIABLES DE FILTRO =====
+let currentFilters = {
+  status: 'all',
+  dateFrom: null,
+  dateTo: null
+};
+
 // ===== ESTADÍSTICAS E HISTORIAL PARA ADMIN =====
-async function loadAdminStats() {
-  const container = getElement('adminStatsContainer');
-  if (!container) return;
-  container.innerHTML = '<p style="text-align:center; padding:2rem;">⏳ Cargando estadísticas...</p>';
+async function loadAdminStats(filters = currentFilters) {
+  const statsOutput = getElement('statsOutput');
+  if (!statsOutput) return;
+  
+  // Mostrar carga solo en el área de resultados
+  statsOutput.innerHTML = '<p style="text-align:center; padding:2rem;">⏳ Cargando estadísticas...</p>';
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .order('created_at', { ascending: false });
+
+    // Aplicar filtro de estado
+    if (filters.status !== 'all') {
+      query = query.eq('status', filters.status);
+    }
+
+    // Aplicar filtro de fechas
+    if (filters.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom + 'T00:00:00');
+    }
+    if (filters.dateTo) {
+      query = query.lte('created_at', filters.dateTo + 'T23:59:59');
+    }
+
+    const { data, error } = await query.limit(200);
 
     if (error) throw error;
     if (!data || data.length === 0) {
-      container.innerHTML = '<p class="empty-history">No hay pedidos registrados aún.</p>';
+      statsOutput.innerHTML = '<p class="empty-history">No hay pedidos que coincidan con los filtros.</p>';
       return;
     }
 
-    // 📊 Cálculos en memoria (rápido y seguro con JSONB)
-    let totalSales = 0;
-    let todaySales = 0;
+    // 📊 Cálculos diferenciados por estado
+    let totalSales = 0;        
+    let pendingAmount = 0;     
+    let cancelledAmount = 0;   
+    let todaySales = 0;        
     const productCounts = {};
     const today = new Date().toDateString();
+    const filteredDate = filters.dateFrom || filters.dateTo ? true : false;
 
     data.forEach(order => {
-      totalSales += order.total || 0;
-      if (new Date(order.created_at).toDateString() === today) todaySales += order.total || 0;
-      
-      if (Array.isArray(order.items)) {
+      const amount = order.total || 0;
+      const status = (order.status || 'pending').toLowerCase();
+      const orderDate = new Date(order.created_at).toDateString();
+      const isToday = orderDate === today;
+
+      // Clasificar montos
+      if (status === 'delivered') {
+        totalSales += amount;
+        if (isToday && !filteredDate) todaySales += amount;
+      } else if (status === 'cancelled') {
+        cancelledAmount += amount;
+      } else {
+        pendingAmount += amount;
+      }
+
+      // Contar productos
+      if (status !== 'cancelled' && Array.isArray(order.items)) {
         order.items.forEach(item => {
           productCounts[item.name] = (productCounts[item.name] || 0) + item.quantity;
         });
@@ -1343,31 +1333,77 @@ async function loadAdminStats() {
       .slice(0, 5)
       .map(([name, qty]) => `${name} (${qty}x)`);
 
-    renderStatsUI({ totalSales, todaySales, topProducts, recentOrders: data });
+    renderStatsUI({ 
+      totalSales, 
+      pendingAmount, 
+      cancelledAmount, 
+      todaySales, 
+      topProducts, 
+      recentOrders: data,
+      filters
+    });
   } catch (err) {
     console.error('Error cargando estadísticas:', err);
-    container.innerHTML = '<p class="empty-history">❌ Error al cargar datos.</p>';
+    statsOutput.innerHTML = '<p class="empty-history">❌ Error al cargar datos.</p>';
   }
 }
 
 function renderStatsUI(stats) {
-  const container = getElement('adminStatsContainer');
+  const container = getElement('statsOutput');
+  if (!container) return;
+
+  const dateLabel = (stats.filters.dateFrom || stats.filters.dateTo) 
+    ? ` (${stats.filters.dateFrom || '...'} a ${stats.filters.dateTo || '...'})` 
+    : '';
+
   container.innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card"><h4>💰 Ventas Totales</h4><p class="stat-value">$${stats.totalSales.toFixed(2)}</p></div>
-      <div class="stat-card"><h4>📅 Ventas Hoy</h4><p class="stat-value">$${stats.todaySales.toFixed(2)}</p></div>
-      <div class="stat-card full-width"><h4>🔥 Top 5 Productos</h4><p class="stat-list">${stats.topProducts.join(' • ') || 'Sin datos aún'}</p></div>
+      <div class="stat-card success">
+        <h4>✅ Entregados${dateLabel}</h4>
+        <p class="stat-value">$${stats.totalSales.toFixed(2)}</p>
+        <small class="stat-sub">Ingresos reales</small>
+      </div>
+      <div class="stat-card warning">
+        <h4>⏳ Pendientes</h4>
+        <p class="stat-value">$${stats.pendingAmount.toFixed(2)}</p>
+        <small class="stat-sub">Por confirmar/entregar</small>
+      </div>
+      <div class="stat-card danger">
+        <h4>❌ Cancelados</h4>
+        <p class="stat-value">$${stats.cancelledAmount.toFixed(2)}</p>
+        <small class="stat-sub">No generaron ingreso</small>
+      </div>
+      ${!stats.filters.dateFrom && !stats.filters.dateTo ? `
+      <div class="stat-card full-width info">
+        <h4>📅 Entregas Hoy</h4>
+        <p class="stat-value">$${stats.todaySales.toFixed(2)}</p>
+        <small class="stat-sub">Solo órdenes entregadas hoy</small>
+      </div>
+      ` : ''}
+      <div class="stat-card full-width">
+        <h4>🔥 Top 5 Productos</h4>
+        <p class="stat-list">${stats.topProducts.join(' • ') || 'Sin datos aún'}</p>
+      </div>
     </div>
-    <h4 style="margin: 1.5rem 0 1rem; color: var(--primary);">📜 Gestión de Pedidos</h4>
+    
+    <h4 style="margin: 1.5rem 0 1rem; color: var(--primary);">📜 Pedidos (${stats.recentOrders.length})</h4>
     <div class="history-scroll">
       <table class="admin-history-table">
-        <thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Estado</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Productos</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
         <tbody>
           ${stats.recentOrders.map(order => {
             const status = order.status || 'pending';
             return `
               <tr>
-                <td><small>${new Date(order.created_at).toLocaleDateString()}</small></td>
+                <td><small>${new Date(order.created_at).toLocaleString()}</small></td>
                 <td><strong>${order.customer_name}</strong><br><small>${order.customer_phone}</small></td>
                 <td>${Array.isArray(order.items) ? order.items.map(i => `${i.quantity}x ${i.name}`).join(', ') : '-'}</td>
                 <td class="price-cell">$${(order.total || 0).toFixed(2)}</td>
@@ -1386,6 +1422,53 @@ function renderStatsUI(stats) {
       </table>
     </div>
   `;
+}
+
+// ===== SETUP DE FILTROS =====
+function setupAdminFilters() {
+  // Botones de estado
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remover active de todos
+      filterBtns.forEach(b => b.classList.remove('active'));
+      // Agregar active al clickeado
+      btn.classList.add('active');
+      // Actualizar filtro
+      currentFilters.status = btn.dataset.filterStatus;
+    });
+  });
+
+  // Botón aplicar filtros
+  const applyBtn = getElement('applyFilters');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      const dateFrom = getElement('filterDateFrom')?.value;
+      const dateTo = getElement('filterDateTo')?.value;
+      
+      currentFilters.dateFrom = dateFrom || null;
+      currentFilters.dateTo = dateTo || null;
+      
+      loadAdminStats(currentFilters);
+      showNotification('🔍 Filtros aplicados');
+    });
+  }
+
+  // Botón limpiar fechas
+  const clearBtn = getElement('clearDateFilter');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      getElement('filterDateFrom').value = '';
+      getElement('filterDateTo').value = '';
+      currentFilters.dateFrom = null;
+      currentFilters.dateTo = null;
+      loadAdminStats(currentFilters);
+      showNotification('🗑️ Filtros de fecha limpiados');
+    });
+  }
+
+  // Cargar estadísticas iniciales
+  loadAdminStats(currentFilters);
 }
 
 // ===== ACTUALIZAR ESTADO DEL PEDIDO =====
