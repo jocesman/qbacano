@@ -1695,3 +1695,187 @@ html, body {
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* Mejoras de accesibilidad en móvil */
+@media (hover: none) {
+  .btn:hover,
+  .menu-item:hover,
+  nav a:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  nav a:hover {
+    background: var(--light);
+    border-radius: 4px;
+  }
+}
+
+/* Móviles pequeños (480px hacia abajo) */
+@media (max-width: 480px) {
+  body {
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    min-width: 320px;
+  }
+
+  header {
+    flex-direction: column;
+    padding: 0.8rem 4%;
+    gap: 0.6rem;
+  }
+
+  .brand {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .imagenqbacano {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  nav a {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .admin-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  section {
+    padding: 2rem 4%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .menu-item {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .menu-item img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+  }
+
+  .menu-content {
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .btn,
+  .btn-add-cart,
+  .order-btn {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.8rem 1rem;
+  }
+
+  .map-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto 1.5rem;
+  }
+
+  .map-container iframe {
+    width: 100%;
+    height: 300px;
+    display: block;
+  }
+
+  .location-info {
+    width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .cart-container,
+  .payment-methods {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.2rem;
+  }
+
+  .install-prompt {
+    left: 2%;
+    right: 2%;
+    width: 96%;
+    max-width: 96vw;
+  }
+
+  footer {
+    padding: 3rem 4%;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .footer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  .separator {
+    display: none;
+  }
+
+  /* Tablas con scroll en móvil */
+  .history-scroll {
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  /* Modales en móvil */
+  .confirm-modal-content,
+  .paypal-modal-content {
+    width: 95%;
+    padding: 1.2rem;
+  }
+
+  /* Inputs en móvil para evitar zoom en iOS */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* FIX: Evitar overflow global */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Safari iOS fix */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  .btn, button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
