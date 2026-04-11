@@ -10,6 +10,30 @@ let products = [];
 let isAdmin = false;
 let deferredPrompt = null;
 
+// ===== UTILIDADES RESPONSIVE =====
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+function adjustTouchTargets() {
+  // Asegura que botones tengan tamaño mínimo para toque
+  const buttons = document.querySelectorAll('button, .btn, [role="button"]');
+  buttons.forEach(btn => {
+    const style = window.getComputedStyle(btn);
+    if (parseInt(style.minHeight) < 44 || parseInt(style.minWidth) < 44) {
+      btn.style.minHeight = '44px';
+      btn.style.minWidth = '44px';
+    }
+  });
+}
+
+// Ejecutar al cargar y al redimensionar
+window.addEventListener('load', adjustTouchTargets);
+window.addEventListener('resize', () => {
+  clearTimeout(window.resizeTimer);
+  window.resizeTimer = setTimeout(adjustTouchTargets, 250);
+});
+
 const defaultProducts = [
   {
     id: 'emp1',
@@ -1072,6 +1096,9 @@ async function init() {
   setupPWA();
   renderMenu();
   updateCartUI();
+  
+  // ✅ Ajustar targets táctiles después de renderizar
+  adjustTouchTargets();
 }
 
 function setupContactFields() {
