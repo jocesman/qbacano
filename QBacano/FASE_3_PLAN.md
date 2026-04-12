@@ -64,39 +64,42 @@ Implementar un backend seguro con NestJS que gestione credenciales, pagos y aute
 
 ---
 
-### **Semana 2: Sistema de Pagos Seguro**
+### **Semana 2: Sistema de Pedidos por WhatsApp**
 
-#### **Día 1-2: Mercado Pago Backend**
-- [ ] Crear endpoint para crear preferencias de pago
-- [ ] Implementar validación de pagos
-- [ ] Configurar webhooks de confirmación
-- [ ] Manejar estados de pago (pendiente, aprobado, rechazado)
+#### **Día 1-2: WhatsApp Business API**
+- [ ] Configurar WhatsApp Business API
+- [ ] Crear endpoint para enviar mensajes de pedido
+- [ ] Implementar formato de mensaje para pedidos
+- [ ] Manejar confirmación de pedidos por WhatsApp
 
-#### **Día 3-4: PayPal Integration**
-- [ ] Configurar PayPal SDK en backend
-- [ ] Crear endpoints para pagos PayPal
-- [ ] Implementar manejo de webhooks
-- [ ] Validar pagos en backend
+#### **Día 3-4: Sistema de Gestión de Pedidos**
+- [ ] Crear endpoints para gestión de pedidos
+- [ ] Implementar estados de pedido (pendiente, confirmado, entregado)
+- [ ] Configurar notificaciones automáticas
+- [ ] Crear panel de administración de pedidos
 
-#### **Día 5: Sistema de Notificaciones**
-- [ ] Enviar confirmaciones por WhatsApp
-- [ ] Enviar emails de confirmación
-- [ ] Crear panel de administración de pagos
-- [ ] Implementar reintentos automáticos
+#### **Día 5: Integración WhatsApp + Pedidos**
+- [ ] Conectar frontend con backend de pedidos
+- [ ] Implementar flujo de pedido por WhatsApp
+- [ ] Crear confirmación automática de pedidos
+- [ ] Configurar seguimiento de estados
+
+### **Semana 3: Sistema de Pagos (OPCIONAL - FUTURO)**
+> **Nota**: Sistema de pagos por Mercado Pago y PayPal se dejará para implementación futura
 
 ---
 
 ### **Semana 3: Producción y Despliegue**
 
 #### **Día 1-2: Frontend Seguro**
-- [ ] Modificar frontend para usar backend
+- [ ] Modificar frontend para usar backend NestJS
 - [ ] Eliminar credenciales del frontend
 - [ ] Implementar autenticación JWT
-- [ ] Actualizar gestión de carrito
+- [ ] Actualizar gestión de carrito para pedidos por WhatsApp
 
 #### **Día 3-4: Despliegue**
 - [ ] Configurar hosting en Vercel/Netlify
-- [ ] Desplegar backend en Railway/Render
+- [ ] Desplegar backend NestJS en Railway/Render
 - [ ] Configurar dominio personalizado
 - [ ] Implementar HTTPS
 
@@ -133,23 +136,30 @@ Implementar un backend seguro con NestJS que gestione credenciales, pagos y aute
 
 ## 📈 **Entregables FASE 3**
 
-### **Backend API**
+### **Backend API NestJS**
 - ✅ Endpoints REST para productos
-- ✅ Sistema de pagos seguro
+- ✅ Sistema de pedidos por WhatsApp
 - ✅ Autenticación JWT
 - ✅ Validación de datos
+- ✅ Gestión de estados de pedidos
 
 ### **Frontend Seguro**
-- ✅ Conexión a backend
+- ✅ Conexión a backend NestJS
 - ✅ Eliminación de credenciales
 - ✅ Autenticación segura
-- ✅ Gestión de carrito
+- ✅ Gestión de carrito para pedidos por WhatsApp
 
 ### **Documentación**
 - ✅ Guía de despliegue
-- ✅ Documentación API
+- ✅ Documentación API NestJS
 - ✅ Guía de seguridad
-- ✅ Manual de administración
+- ✅ Manual de administración de pedidos
+
+### **Sistema de Pedidos por WhatsApp**
+- ✅ Integración WhatsApp Business API
+- ✅ Formato de mensajes de pedido
+- ✅ Confirmación automática de pedidos
+- ✅ Panel de administración de pedidos
 
 ---
 
