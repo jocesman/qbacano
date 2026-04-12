@@ -24,6 +24,12 @@ Implementar un backend seguro que gestione credenciales, pagos y autenticación 
 
 ### 🗓️ **Duración Estimada**: 2-3 semanas
 
+### 💰 **Presupuesto**: $0 (Todo Gratis)
+- **Frontend**: Vercel (Gratis)
+- **Backend**: Railway/Render (Gratis)
+- **Base de datos**: Supabase (Gratis)
+- **DNS/SSL**: Cloudflare (Gratis)
+
 ---
 
 ## 📝 **FASE 3: Plan Detallado**
@@ -137,17 +143,19 @@ Implementar un backend seguro que gestione credenciales, pagos y autenticación 
 
 ---
 
-## 💰 **Presupuesto Estimado**
+## 💰 **Presupuesto Estimado (GRATIS)**
 
-### **Servicios Cloud**
-- Backend hosting: $5-10/mes
-- Frontend hosting: $0-20/mes
-- Supabase: $0-25/mes
-- **Total mensual**: $10-55
+### **Servicios Cloud Gratuitos**
+- **Frontend hosting**: Vercel (Gratis)
+- **Backend hosting**: Railway/Render (Gratis)
+- **Supabase**: Gratis (hasta 500MB)
+- **Cloudflare**: Gratis (DNS + SSL)
+- **Total mensual**: $0
 
 ### **Dominio**
-- Dominio .com: $10-15/año
-- SSL: Gratis (Let's Encrypt)
+- **Dominio .com**: $10-15/año
+- **SSL**: Gratis (Let's Encrypt)
+- **Email**: Gratis (Gmail/Outlook)
 
 ---
 
