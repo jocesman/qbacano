@@ -20,7 +20,7 @@
 ## 🎯 FASE 3: Backend Seguro y Producción
 
 ### 📊 **Objetivo Principal**
-Implementar un backend seguro que gestione credenciales, pagos y autenticación para producción.
+Implementar un backend seguro con NestJS que gestione credenciales, pagos y autenticación para producción.
 
 ### 🗓️ **Duración Estimada**: 2-3 semanas
 
@@ -30,17 +30,25 @@ Implementar un backend seguro que gestione credenciales, pagos y autenticación 
 - **Base de datos**: Supabase (Gratis)
 - **DNS/SSL**: Cloudflare (Gratis)
 
+### 🏗️ **Arquitectura NestJS**
+- **Módulos**: Organización modular
+- **Controladores**: Endpoints REST
+- **Servicios**: Lógica de negocio
+- **Decoradores**: Validación y seguridad
+- **Providers**: Inyección de dependencias
+
 ---
 
 ## 📝 **FASE 3: Plan Detallado**
 
 ### **Semana 1: Infraestructura Backend**
 
-#### **Día 1-2: Node.js + Express Backend**
-- [ ] Crear proyecto Node.js backend
-- [ ] Configurar Express.js con TypeScript
+#### **Día 1-2: NestJS Backend**
+- [ ] Crear proyecto NestJS con CLI
+- [ ] Configurar módulos y controladores
 - [ ] Implementar variables de entorno seguras
 - [ ] Configurar CORS y seguridad básica
+- [ ] Instalar decoradores y validaciones
 
 #### **Día 3-4: Supabase Integration**
 - [ ] Conectar backend a Supabase con SERVICE_ROLE
@@ -103,11 +111,13 @@ Implementar un backend seguro que gestione credenciales, pagos y autenticación 
 ## 🔧 **Tecnologías a Implementar**
 
 ### **Backend**
-- **Node.js + Express** - Servidor principal
+- **NestJS** - Framework Node.js modular (Reemplaza Express)
 - **TypeScript** - Tipado seguro
 - **JWT** - Autenticación segura
 - **Supabase** - Base de datos y autenticación
 - **Nodemailer** - Emails de confirmación
+- **Class Validator** - Validación de datos
+- **Swagger** - Documentación API
 
 ### **Pagos**
 - **Mercado Pago SDK** - Pagos seguros
