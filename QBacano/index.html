@@ -34,6 +34,11 @@
       <a href="#pedido">Pedir</a>
       <button id="adminToggle" class="admin-btn" type="button" title="Modo Administrador">🔒</button>
     </nav>
+    <!-- NUEVO: Barra de Búsqueda -->
+    <div id="search-container" class="search-container">
+      <input type="text" id="searchInput" placeholder="🔍 Buscar empanada, salchipapa, postre...">
+      <button id="clearSearch" class="hidden">✕</button>
+    </div>
   </header>
 
   <!-- Panel de Admin (Oculto por defecto) -->
@@ -161,17 +166,22 @@
 
   <!-- Menú Principal -->
   <section id="menu">
-    <h2 class="section-title">🥟 Empanadas Artesanales</h2>
-    <div id="empanadasGrid" class="menu-grid"></div>
+    <div id="menu-categories">
+      <h2 class="section-title">🥟 Empanadas Artesanales</h2>
+      <div id="empanadasGrid" class="menu-grid"></div>
 
-    <h2 class="section-title" style="margin-top: 3rem;">🍟 Salchipapas Q'Bacano</h2>
-    <div id="salchipapasGrid" class="menu-grid"></div>
-  </section>
+      <h2 class="section-title">🍟 Salchipapas Q'Bacano</h2>
+      <div id="salchipapasGrid" class="menu-grid"></div>
 
-  <!-- SECCIÓN DE POSTRES -->
-  <section id="postres" class="postres-section">
-    <h2 class="section-title">🍰 Postres Caseros</h2>
-    <div id="postresGrid" class="menu-grid"></div>
+      <h2 class="section-title">🍰 Postres Caseros</h2>
+      <div id="postresGrid" class="menu-grid"></div>
+    </div>
+    <!-- NUEVO: Contenedor para resultados de búsqueda (oculto por defecto) -->
+    <div id="search-results-container" class="hidden">
+        <h2 class="section-title">🔎 Resultados de búsqueda</h2>
+        <div id="searchResultsGrid" class="menu-grid"></div>
+        <p id="noResultsMsg" class="hidden" style="text-align:center; color:var(--gray); padding:2rem;">No se encontraron productos con ese nombre.</p>
+    </div>
   </section>
 
   <!-- PEDIDOS Y PAGOS -->

@@ -285,11 +285,100 @@ async function applyGlobalAvailability() {
   renderMenu();
 }
 
+// ===== RENDERIZADO INTELIGENTE (Muestra Menú o Búsqueda) =====
 function renderMenu() {
-  renderProductGrid('empanadas', 'empanadasGrid');
-  renderProductGrid('salchipapas', 'salchipapasGrid');
-  renderProductGrid('postres', 'postresGrid');
+  const searchTerm = getElement('searchInput').value.toLowerCase().trim();
+  const searchContainer = getElement('search-results-container');
+  const menuContainer = getElement('menu-categories');
+  const noResultsMsg = getElement('noResultsMsg');
+
+  // 1. Si hay búsqueda activa
+  if (searchTerm) {
+    menuContainer.classList.add('hidden');
+    searchContainer.classList.remove('hidden');
+
+    // Filtrar productos
+    const results = products.filter(p => 
+      p.name.toLowerCase().includes(searchTerm) || 
+      p.description.toLowerCase().includes(searchTerm)
+    );
+
+    // Renderizar en la grid de búsqueda
+    const grid = getElement('searchResultsGrid');
+    if (results.length > 0) {
+      noResultsMsg.classList.add('hidden');
+      grid.innerHTML = results.map(product => createProductCardHTML(product)).join('');
+    } else {
+      grid.innerHTML = '';
+      noResultsMsg.classList.remove('hidden');
+    }
+  } 
+  // 2. Si NO hay búsqueda (Menú normal)
+  else {
+    searchContainer.classList.add('hidden');
+    menuContainer.classList.remove('hidden');
+
+    renderProductGrid('empanadas', 'empanadasGrid');
+    renderProductGrid('salchipapas', 'salchipapasGrid');
+    renderProductGrid('postres', 'postresGrid');
+  }
+  
+  // Lista admin siempre se actualiza
   renderAdminProductList();
+}
+
+// ===== HTML GENERADOR DE TARJETAS =====
+function createProductCardHTML(product) {
+  const isTop = product.price === 100; // Lógica simplificada para ejemplo, ajusta si necesitas
+  return `
+    <div class="menu-item ${product.available ? '' : 'unavailable'}" data-id="${product.id}" data-available="${product.available}">
+      <div class="product-badge unavailable-badge ${product.available ? 'hidden' : ''}">Agotado</div>
+      <img src="${product.image || 'img/LOGO.jpg'}" alt="${product.name}" loading="lazy" onerror="this.src='img/LOGO.jpg'">
+      <div class="menu-content">
+        <h3>${product.name}</h3>
+        <p>${product.description}</p>
+        <div class="price">$${product.price.toFixed(2)}</div>
+        <div class="product-actions">
+          <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${product.available ? '' : 'disabled'}>
+            🔥 Pedir ahora
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== CONFIGURACIÓN DEL BUSCADOR =====
+function setupSearch() {
+  const input = getElement('searchInput');
+  const clearBtn = getElement('clearSearch');
+  const container = getElement('search-container');
+
+  // Evento al escribir
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+    
+    // Mostrar/ocultar botón borrar
+    if (val) {
+      clearBtn.classList.remove('hidden');
+      container.classList.add('has-content');
+    } else {
+      clearBtn.classList.add('hidden');
+      container.classList.remove('has-content');
+    }
+    
+    // Re-renderizar menú
+    renderMenu();
+  });
+
+  // Botón borrar
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    input.focus();
+    clearBtn.classList.add('hidden');
+    container.classList.remove('has-content');
+    renderMenu();
+  });
 }
 
 function renderProductGrid(category, gridId) {
@@ -1094,6 +1183,7 @@ async function init() {
   setupMenuEvents();
   setupContactFields();
   setupPWA();
+  setupSearch();
   renderMenu();
   updateCartUI();
   

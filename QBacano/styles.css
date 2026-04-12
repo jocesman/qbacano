@@ -1879,3 +1879,67 @@ html, body {
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* ===== BARRA DE BÚSQUEDA ===== */
+.search-container {
+  width: 100%;
+  padding: 0.5rem 5%; /* Padding horizontal igual al header */
+  background: var(--white);
+  position: sticky; /* Se queda fijo al hacer scroll en el header */
+  top: 60px; /* Ajusta según la altura de tu header */
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  transition: box-shadow 0.3s;
+}
+
+.search-container.has-content {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.search-container input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 2px solid #eee;
+  border-radius: 25px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s;
+  width: 100%;
+}
+
+.search-container input:focus {
+  border-color: var(--primary);
+}
+
+.search-container button#clearSearch {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Ajuste para header sticky + search */
+body {
+  padding-top: 0; /* Asegurar que no haya conflicto con sticky header */
+}
+
+/* En móvil, ajustar el top del search-container */
+@media (max-width: 768px) {
+  .search-container {
+    top: auto; /* Desactivar sticky relativo al header en móvil si se apila */
+    position: static;
+    padding: 0.5rem 4%;
+    margin-bottom: 1rem;
+  }
+}
