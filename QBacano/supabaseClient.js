@@ -1,6 +1,17 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js'
 
-const SUPABASE_URL = 'https://iuaqxtadhkgcsjhyeybk.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1YXF4dGFkaGtnY3NqaHlleWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNTQ1NzIsImV4cCI6MjA5MDkzMDU3Mn0.9i8pbPKA7QqQqkssZnVZpeO-_hhLeNLUPl_KSIEouFs'
-
+/**
+ * Cliente de Supabase configurado
+ * 
+ * NOTA DE SEGURIDAD:
+ * - Usamos la clave ANÓNIMA (anonKey) que es segura para el frontend
+ * - Esta clave tiene permisos limitados por las Row Level Security (RLS) policies
+ * - La clave SERVICE_ROLE (secreta) NUNCA debe exponerse en el frontend
+ * 
+ * Para mayor seguridad en producción:
+ * 1. Configurar correctamente las RLS policies en Supabase
+ * 2. Usar un backend para operaciones sensibles
+ * 3. Implementar autenticación de usuarios
+ */
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)

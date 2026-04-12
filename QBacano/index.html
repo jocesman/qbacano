@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Prevenir zoom y asegurar viewport correcto -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sabores Q'Bacano - Empanadas, Salchipapas y Postres</title>
+  <title>Sabores Q'Bacano - Street Food</title>
   <meta name="description" content="Empanadas, salchipapas y postres artesanales. Pedidos por WhatsApp, delivery y pago online.">
   <meta name="theme-color" content="#d35400">
   
@@ -15,7 +14,7 @@
   <link rel="apple-touch-icon" href="img/logo.png">
   
   <!-- Icons -->
-  <link rel="icon" type="image/jpeg" href="img/logo.png">
+  <link rel="icon" type="image/png" href="img/logo.png">
   
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -25,7 +24,7 @@
   <header>
     <a href="#menu" class="brand">
       <img src="img/logo.png" alt="Logo de Sabores Q'Bacano" class="imagenqbacano" width="50" height="50">
-      <span class="logo-text">Sabores Q'Bacano</span>
+      <span class="logo-text">Sabores Q'Bacano - Street Food</span>
     </a>
     <nav aria-label="Navegación principal">
       <a href="#menu">Menú</a>
@@ -34,18 +33,19 @@
       <a href="#pedido">Pedir</a>
       <button id="adminToggle" class="admin-btn" type="button" title="Modo Administrador">🔒</button>
     </nav>
-    <!-- NUEVO: Barra de Búsqueda -->
-    <div id="search-container" class="search-container">
-      <input type="text" id="searchInput" placeholder="🔍 Buscar empanada, salchipapa, postre...">
-      <button id="clearSearch" class="hidden">✕</button>
-    </div>
   </header>
+
+  <!-- Barra de Búsqueda -->
+  <div id="search-container" class="search-container">
+    <input type="text" id="searchInput" placeholder="🔍 Buscar empanada, salchipapa, postre...">
+    <button id="clearSearch" class="hidden" aria-label="Limpiar búsqueda">✕</button>
+  </div>
 
   <!-- Panel de Admin (Oculto por defecto) -->
   <div id="adminPanel" class="admin-panel hidden">
     <div class="admin-header">
       <h3>🔧 Panel de Control</h3>
-      <button id="closeAdmin" class="close-btn">×</button>
+      <button id="closeAdmin" class="close-btn" aria-label="Cerrar panel">×</button>
     </div>
     <p>Activa/desactiva, agrega, modifica o elimina productos desde aquí. Los cambios se guardan automáticamente en este dispositivo.</p>
     <div class="admin-controls">
@@ -85,215 +85,205 @@
         <input type="url" id="productImage" placeholder="https://...">
       </label>
       <div class="form-group">
-      <label>Opciones del producto</label>
-      
-      <div class="checkbox-group">
-        <label class="checkbox-item">
-          <input type="checkbox" id="productAvailable">
-          <span>Disponible</span>
-        </label>
-        <label class="checkbox-item">
-          <input type="checkbox" id="is_combo">
-          <span>Es combo 🔥</span>
-        </label>
+        <label>Opciones del producto</label>
+        <div class="checkbox-group">
+          <label class="checkbox-item">
+            <input type="checkbox" id="productAvailable">
+            <span>Disponible</span>
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" id="is_combo">
+            <span>Es combo 🔥</span>
+          </label>
+        </div>
       </div>
-    </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Guardar producto</button>
-          <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar producto</button>
+        <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
       </div>
     </form>
     <div id="adminProductList" class="admin-product-list"></div>
-    <!-- NUEVO: Botón y contenedor de estadísticas -->
     <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
-        <button type="button" id="viewStatsBtn" class="btn btn-secondary" style="width:100%">📊 Ver Estadísticas e Historial</button>
+      <button type="button" id="viewStatsBtn" class="btn btn-secondary" style="width:100%">📊 Ver Estadísticas e Historial</button>
     </div>
-      <!-- Contenedor Principal -->
-      <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
-          
-          <!-- 1. PANEL DE FILTROS (Estático: No se borra al actualizar datos) -->
-          <div class="filters-panel">
-              <h4 style="margin-bottom: 1rem; color: var(--primary);">🔍 Filtros</h4>
-              
-              <!-- Filtro por Estado -->
-              <div class="filter-group">
-                  <label>Estado del pedido:</label>
-                  <div class="filter-buttons">
-                      <button type="button" class="filter-btn active" data-filter-status="all">🔄 Todos</button>
-                      <button type="button" class="filter-btn" data-filter-status="delivered">✅ Entregados</button>
-                      <button type="button" class="filter-btn" data-filter-status="pending">⏳ Pendientes</button>
-                      <button type="button" class="filter-btn" data-filter-status="confirmed">🔔 Confirmados</button>
-                      <button type="button" class="filter-btn" data-filter-status="cancelled">❌ Cancelados</button>
-                  </div>
-              </div>
-              
-              <!-- Filtro por Fecha -->
-              <div class="filter-group">
-                  <label>Rango de fechas:</label>
-                  <div class="date-filters">
-                      <div class="date-input-group">
-                          <label for="filterDateFrom">Desde:</label>
-                          <input type="date" id="filterDateFrom" class="date-input">
-                      </div>
-                      <div class="date-input-group">
-                          <label for="filterDateTo">Hasta:</label>
-                          <input type="date" id="filterDateTo" class="date-input">
-                      </div>
-                      <button type="button" id="clearDateFilter" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">🗑️ Limpiar</button>
-                  </div>
-              </div>
-              
-              <!-- Botón Aplicar -->
-              <button type="button" id="applyFilters" class="btn btn-primary" style="width: 100%;">🔎 Aplicar Filtros</button>
+    <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
+      <!-- PANEL DE FILTROS -->
+      <div class="filters-panel">
+        <h4 style="margin-bottom: 1rem; color: var(--primary);">🔍 Filtros</h4>
+        <div class="filter-group">
+          <label>Estado del pedido:</label>
+          <div class="filter-buttons">
+            <button type="button" class="filter-btn active" data-filter-status="all">🔄 Todos</button>
+            <button type="button" class="filter-btn" data-filter-status="delivered">✅ Entregados</button>
+            <button type="button" class="filter-btn" data-filter-status="pending">⏳ Pendientes</button>
+            <button type="button" class="filter-btn" data-filter-status="confirmed">🔔 Confirmados</button>
+            <button type="button" class="filter-btn" data-filter-status="cancelled">❌ Cancelados</button>
           </div>
-
-          <!-- 2. SALIDA DE ESTADÍSTICAS (Dinámico: Aquí se dibujan los resultados) -->
-          <div id="statsOutput"></div>
-
+        </div>
+        <div class="filter-group">
+          <label>Rango de fechas:</label>
+          <div class="date-filters">
+            <div class="date-input-group">
+              <label for="filterDateFrom">Desde:</label>
+              <input type="date" id="filterDateFrom" class="date-input">
+            </div>
+            <div class="date-input-group">
+              <label for="filterDateTo">Hasta:</label>
+              <input type="date" id="filterDateTo" class="date-input">
+            </div>
+            <button type="button" id="clearDateFilter" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">🗑️ Limpiar</button>
+          </div>
+        </div>
+        <button type="button" id="applyFilters" class="btn btn-primary" style="width: 100%;">🔎 Aplicar Filtros</button>
       </div>
+      <!-- SALIDA DE ESTADÍSTICAS -->
+      <div id="statsOutput"></div>
+    </div>
   </div>
 
   <main>
     <!-- Hero -->
-  <section class="hero">
-    <h1>Empanadas, salchipapas y postres con sabor casero</h1>
-    <p>Masa crujiente, papas doradas y postres irresistibles. ¡Hecho con amor, directo a tu mesa!</p>
-    <div class="hero-buttons">
-      <a href="#menu" class="btn btn-primary">Ver Menú</a>
-      <a href="#pedido" class="btn btn-secondary">Ordenar Ahora</a>
-    </div>
-  </section>
+    <section class="hero">
+      <h1>Empanadas, salchipapas y postres con sabor casero</h1>
+      <p>Masa crujiente, papas doradas y postres irresistibles. ¡Hecho con amor, directo a tu mesa!</p>
+      <div class="hero-buttons">
+        <a href="#menu" class="btn btn-primary">Ver Menú</a>
+        <a href="#pedido" class="btn btn-secondary">Ordenar Ahora</a>
+      </div>
+    </section>
 
-  <!-- Menú Principal -->
-  <section id="menu">
-    <div id="menu-categories">
-      <h2 class="section-title">🥟 Empanadas Artesanales</h2>
-      <div id="empanadasGrid" class="menu-grid"></div>
-
-      <h2 class="section-title">🍟 Salchipapas Q'Bacano</h2>
-      <div id="salchipapasGrid" class="menu-grid"></div>
-
-      <h2 class="section-title">🍰 Postres Caseros</h2>
-      <div id="postresGrid" class="menu-grid"></div>
-    </div>
-    <!-- NUEVO: Contenedor para resultados de búsqueda (oculto por defecto) -->
-    <div id="search-results-container" class="hidden">
+    <!-- Menú Principal -->
+    <section id="menu">
+      <!-- Contenedor para resultados de búsqueda -->
+      <div id="search-results-container" class="hidden">
         <h2 class="section-title">🔎 Resultados de búsqueda</h2>
         <div id="searchResultsGrid" class="menu-grid"></div>
         <p id="noResultsMsg" class="hidden" style="text-align:center; color:var(--gray); padding:2rem;">No se encontraron productos con ese nombre.</p>
-    </div>
-  </section>
-
-  <!-- PEDIDOS Y PAGOS -->
-  <section id="pedido" class="pedido-section">
-    <h2 class="section-title">🛒 Tu Pedido</h2>
-    
-    <!-- Carrito -->
-    <div id="cart" class="cart-container">
-      <div class="cart-empty">Tu carrito está vacío. ¡Agrega productos del menú!</div>
-      <div id="cartItems" class="cart-items hidden"></div>
-      <div id="cartTotal" class="cart-total hidden">
-        <h3>Total: $<span id="totalAmount">0.00</span></h3>
       </div>
-    </div>
 
-    <!-- Métodos de Pedido -->
-    <div id="paymentMethods" class="payment-methods hidden">
-      <h3>📱 Pedido por WhatsApp</h3>
+      <div id="menu-categories">
+        <h2 class="section-title">🥟 Empanadas Artesanales</h2>
+        <div id="empanadasGrid" class="menu-grid"></div>
+
+        <h2 class="section-title">🍟 Salchipapas Q'Bacano</h2>
+        <div id="salchipapasGrid" class="menu-grid"></div>
+
+        <h2 class="section-title">🍰 Postres Caseros</h2>
+        <div id="postresGrid" class="menu-grid"></div>
+      </div>
+    </section>
+
+    <!-- PEDIDOS Y PAGOS -->
+    <section id="pedido" class="pedido-section">
+      <h2 class="section-title">🛒 Tu Pedido</h2>
       
-      <div class="payment-options">
-        <!-- Mercado Pago -->
-        <div class="payment-card">
-          <h4>Mercado Pago</h4>
-          <p class="coming-soon">Habilitado próximamente.</p>
-          <button type="button" class="btn-payment btn-mercadopago" disabled>
-            Próximamente
-          </button>
-        </div>
-
-        <!-- PayPal -->
-        <div class="payment-card">
-          <h4>PayPal</h4>
-          <p class="coming-soon">Habilitado próximamente.</p>
-          <button type="button" class="btn-payment btn-paypal" disabled>
-            Próximamente
-          </button>
-        </div>
-
-        <!-- Pedido por WhatsApp -->
-        <div class="payment-card">
-          <h4>Pedido por WhatsApp</h4>
-          <p>Haz tu pedido directo al WhatsApp de Q'Bacano.</p>
-          <a id="paymentWhatsAppBtn" data-action="whatsapp-order" href="#" class="btn btn-whatsapp" target="_blank">
-            Enviar pedido por WhatsApp
-          </a>
+      <!-- Carrito -->
+      <div id="cart" class="cart-container">
+        <div class="cart-empty">Tu carrito está vacío. ¡Agrega productos del menú!</div>
+        <div id="cartItems" class="cart-items hidden"></div>
+        <div id="cartTotal" class="cart-total hidden">
+          <h3>Total: $<span id="totalAmount">0.00</span></h3>
         </div>
       </div>
+
+      <!-- Métodos de Pedido -->
+      <div id="paymentMethods" class="payment-methods hidden">
+        <h3>📱 Pedido por WhatsApp</h3>
+        
+        <div class="payment-options">
+          <!-- Mercado Pago -->
+          <div class="payment-card">
+            <h4>Mercado Pago</h4>
+            <p class="coming-soon">Habilitado próximamente.</p>
+            <button type="button" class="btn-payment btn-mercadopago" disabled>
+              Próximamente
+            </button>
+          </div>
+
+          <!-- PayPal -->
+          <div class="payment-card">
+            <h4>PayPal</h4>
+            <p class="coming-soon">Habilitado próximamente.</p>
+            <button type="button" class="btn-payment btn-paypal" disabled>
+              Próximamente
+            </button>
+          </div>
+
+          <!-- Pedido por WhatsApp -->
+          <div class="payment-card">
+            <h4>Pedido por WhatsApp</h4>
+            <p>Haz tu pedido directo al WhatsApp de Q'Bacano.</p>
+            <a id="paymentWhatsAppBtn" data-action="whatsapp-order" href="#" class="btn btn-whatsapp" target="_blank" rel="noopener noreferrer">
+              Enviar pedido por WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <p class="pedido-note">Tu pedido se completa al enviar los datos por WhatsApp.</p>
+    </section>
+
+    <!-- Modal de confirmación WhatsApp -->
+    <div id="whatsapp-confirm-modal" class="confirm-modal hidden">
+      <div class="confirm-modal-content">
+        <div class="modal-header-logo">
+          <img src="img/logo.png" alt="Logo Sabores Q'Bacano">
+          <span>Sabores Q'Bacano - Street Food</span>
+        </div>
+        <h3>Finaliza tu pedido por WhatsApp</h3>
+        <p id="whatsapp-confirm-message">Completa los datos y revisa tu pedido antes de enviar.</p>
+
+        <div class="modal-group">
+          <h4>Datos de contacto</h4>
+          <label>
+            Nombre completo
+            <input type="text" id="customerName" placeholder="Tu nombre" required>
+          </label>
+          <label>
+            Teléfono / WhatsApp
+            <input type="tel" id="customerPhone" placeholder="+52 981 210 07 78">
+          </label>
+          <label>
+            Dirección de entrega
+            <textarea id="customerAddress" rows="2" placeholder="Calle, colonia, número, referencia"></textarea>
+          </label>
+        </div>
+
+        <div class="order-summary">
+          <h4>Resumen del pedido</h4>
+          <ul id="whatsapp-order-summary"></ul>
+          <p class="summary-total">Total: $<span id="whatsapp-summary-total">0.00</span></p>
+        </div>
+
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn btn-secondary" data-action="cancel-whatsapp">Cancelar</button>
+          <button type="button" class="btn btn-primary" data-action="confirm-whatsapp">Enviar por WhatsApp</button>
+        </div>
+      </div>
     </div>
 
-    <p class="pedido-note">Tu pedido se completa al enviar los datos por WhatsApp.</p>
-  </section>
-
-  <div id="whatsapp-confirm-modal" class="confirm-modal hidden">
-    <div class="confirm-modal-content">
-      <div class="modal-header-logo">
-        <img src="img/logo.png" alt="Logo Sabores Q'Bacano">
-        <span>Sabores Q'Bacano</span>
-      </div>
-      <h3>Finaliza tu pedido por WhatsApp</h3>
-      <p id="whatsapp-confirm-message">Completa los datos y revisa tu pedido antes de enviar.</p>
-
-      <div class="modal-group">
-        <h4>Datos de contacto</h4>
-        <label>
-          Nombre completo
-          <input type="text" id="customerName" placeholder="Tu nombre" required>
-        </label>
-        <label>
-          Teléfono / WhatsApp
-          <input type="tel" id="customerPhone" placeholder="+52 981 210 07 78">
-        </label>
-        <label>
-          Dirección de entrega
-          <textarea id="customerAddress" rows="2" placeholder="Calle, colonia, número, referencia"></textarea>
-        </label>
-      </div>
-
-      <div class="order-summary">
-        <h4>Resumen del pedido</h4>
-        <ul id="whatsapp-order-summary"></ul>
-        <p class="summary-total">Total: $<span id="whatsapp-summary-total">0.00</span></p>
-      </div>
-
-      <div class="confirm-modal-actions">
-        <button type="button" class="btn btn-secondary" data-action="cancel-whatsapp">Cancelar</button>
-        <button type="button" class="btn btn-primary" data-action="confirm-whatsapp">Enviar por WhatsApp</button>
+    <!-- Instalación PWA -->
+    <div id="installPrompt" class="install-prompt hidden">
+      <div class="prompt-content">
+        <p>📲 Instala Sabores Q'Bacano en tu dispositivo</p>
+        <div class="prompt-buttons">
+          <button type="button" class="btn btn-primary" data-action="install-pwa">Instalar</button>
+          <button type="button" class="btn btn-secondary" data-action="close-install">Ahora no</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Instalación PWA -->
-  <div id="installPrompt" class="install-prompt hidden">
-    <div class="prompt-content">
-      <p>📲 Instala Sabores Q'Bacano en tu dispositivo</p>
-      <div class="prompt-buttons">
-        <button type="button" class="btn btn-primary" data-action="install-pwa">Instalar</button>
-        <button type="button" class="btn btn-secondary" data-action="close-install">Ahora no</button>
+    <!-- Modal de PayPal -->
+    <div id="paypal-modal" class="paypal-modal" style="display: none;">
+      <div class="paypal-modal-content">
+        <button class="paypal-close-btn" data-action="close-paypal-modal" aria-label="Cerrar modal">×</button>
+        <div class="paypal-modal-header">
+          <h3>Pagar con PayPal</h3>
+          <p>Completa tu pago de forma segura</p>
+        </div>
+        <div id="paypal-button-container" class="paypal-button-container"></div>
       </div>
     </div>
-  </div>
-
-  <!-- Modal de PayPal -->
-  <div id="paypal-modal" class="paypal-modal" style="display: none;">
-    <div class="paypal-modal-content">
-      <button class="paypal-close-btn" data-action="close-paypal-modal">×</button>
-      <div class="paypal-modal-header">
-        <h3>Pagar con PayPal</h3>
-        <p>Completa tu pago de forma segura</p>
-      </div>
-      <div id="paypal-button-container" class="paypal-button-container"></div>
-    </div>
-  </div>
 
   </main>
 
@@ -306,7 +296,7 @@
         <p class="horario-detalle">📅 Lunes a Viernes<br>🕐 8:00 am a 5:00 pm y de 8:00 pm a 11:00 pm</p>
         <p class="horario-detalle">📅 Sábados y Domingos<br>🕐 2:00 pm a 11:00 pm</p>
         <div class="location-info">
-          <h3>🏪 Sabores Q'Bacano</h3>
+          <h3>🏪 Sabores Q'Bacano - Street Food</h3>
           <p><strong>Dirección:</strong> Calle Revellin #6-24, San Francisco de Campeche - Campeche</p>
           <p><strong>Teléfono:</strong> <a href="tel:+529812100778">+52 981 210 07 78</a></p>
         </div>
@@ -319,7 +309,8 @@
           style="border:0; border-radius: 18px;" 
           allowfullscreen="" 
           loading="lazy" 
-          referrerpolicy="no-referrer-when-downgrade">
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Ubicación de Sabores Q'Bacano">
         </iframe>
       </div>
     </div>
@@ -330,7 +321,7 @@
       <div class="footer-brand">
         <img src="img/logo.png" alt="Logo Sabores Q'Bacano" class="footer-logo">
         <div>
-          <p>Sabores Q'Bacano</p>
+          <p>Sabores Q'Bacano - Street Food</p>
           <p>© 2026. Todos los derechos reservados.</p>
         </div>
       </div>

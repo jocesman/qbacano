@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient.js'
+import { WHATSAPP_PHONE, IMAGE_FALLBACK, SESSION_DURATION } from './config.js'
 
 // ===== VARIABLES GLOBALES =====
 const STORAGE_CART = 'qbacano_cart';
@@ -182,7 +183,7 @@ async function fetchProductsFromDB() {
     name: product.name,
     description: product.description,
     price: parseFloat(product.price),
-    image: product.image_url || 'img/LOGO.jpg',
+    image: product.image_url || IMAGE_FALLBACK,
     available: product.available ?? true,
     is_combo: product.is_combo ?? false,
   }));
@@ -287,59 +288,105 @@ async function applyGlobalAvailability() {
 
 // ===== RENDERIZADO INTELIGENTE (Muestra Menú o Búsqueda) =====
 function renderMenu() {
-  const searchTerm = getElement('searchInput').value.toLowerCase().trim();
-  const searchContainer = getElement('search-results-container');
-  const menuContainer = getElement('menu-categories');
-  const noResultsMsg = getElement('noResultsMsg');
+  const searchInput = getElement('searchInput');
+  const searchTerm = (searchInput?.value || '').toLowerCase().trim();
+  // Usar los elementos de la sección menú (IDs correctos después de limpiar HTML)
+  const searchResultsContainer = getElement('search-results-container');
+  const menuCategories = getElement('menu-categories');
 
-  // 1. Si hay búsqueda activa
-  if (searchTerm) {
-    menuContainer.classList.add('hidden');
-    searchContainer.classList.remove('hidden');
+  // Si hay búsqueda activa
+  if (searchTerm.length > 0) {
+    if (menuCategories) menuCategories.classList.add('hidden');
+    if (searchResultsContainer) {
+      searchResultsContainer.classList.remove('hidden');
+      
+      // Filtrar productos por nombre o descripción
+    // 🔍 BÚSQUEDA INTELIGENTE CORREGIDA
+    const filteredProducts = products
+      .map(product => {
+        const name = (product.name || '').toLowerCase();
+        const desc = (product.description || '').toLowerCase();
+        const category = (product.category || '').toLowerCase();
 
-    // Filtrar productos
-    const results = products.filter(p => 
-      p.name.toLowerCase().includes(searchTerm) || 
-      p.description.toLowerCase().includes(searchTerm)
-    );
+        let score = 0;
 
-    // Renderizar en la grid de búsqueda
-    const grid = getElement('searchResultsGrid');
-    if (results.length > 0) {
-      noResultsMsg.classList.add('hidden');
-      grid.innerHTML = results.map(product => createProductCardHTML(product)).join('');
-    } else {
-      grid.innerHTML = '';
-      noResultsMsg.classList.remove('hidden');
+        // Coincidencias
+        if (name.includes(searchTerm)) score += 5;
+        if (desc.includes(searchTerm)) score += 3;
+        if (category.includes(searchTerm)) score += 2;
+
+        // Extras de negocio
+        if (product.available) score += 2;
+        if (product.is_combo) score += 1;
+
+        return { ...product, score };
+      })
+      // 👇 IMPORTANTE: fallback si no hay coincidencias
+      .filter(p => {
+        if (!searchTerm) return true;
+        return p.score > 0;
+      })
+      .sort((a, b) => b.score - a.score);
+
+      const searchResultsGrid = getElement('searchResultsGrid');
+      const noResultsMsg = getElement('noResultsMsg');
+
+      if (filteredProducts.length > 0) {
+        if (noResultsMsg) noResultsMsg.classList.add('hidden');
+        if (searchResultsGrid) {
+          searchResultsGrid.innerHTML = filteredProducts.map(product => {
+          const maxPrice = Math.max(...products.map(p => p.price || 0));
+          const isTop = product.price === maxPrice;
+            return `<div class="menu-item${product.available ? '' : ' unavailable'} ${isTop ? 'top-product' : ''}" data-id="${product.id}" data-available="${product.available}">
+              <div class="product-badge unavailable-badge${product.available ? ' hidden' : ''}">Agotado</div>
+              <img src="${product.image || IMAGE_FALLBACK}" alt="${product.name}" loading="lazy" onerror="this.src='${IMAGE_FALLBACK}'">
+              <div class="menu-content">
+                <h3>${product.name} ${product.name.toLowerCase().includes('combo') ? '🔥' : ''}</h3>
+                <p>${product.description}</p>
+                <div class="price">$${product.price.toFixed(2)}</div>
+                <div class="product-actions">
+                  <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${product.available ? '' : 'disabled'}>🔥Pedir ahora</button>
+                  <button type="button" class="toggle-availability admin-only hidden" data-action="toggle-availability" data-product-id="${product.id}">🔘 Activar/Desactivar</button>
+                  <button type="button" class="btn btn-secondary admin-only hidden" data-action="edit" data-product-id="${product.id}">✏️ Editar</button>
+                  <button type="button" class="btn btn-danger admin-only hidden" data-action="delete" data-product-id="${product.id}">🗑️ Eliminar</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+        }
+      } else {
+        if (searchResultsGrid) searchResultsGrid.innerHTML = '';
+        if (noResultsMsg) noResultsMsg.classList.remove('hidden');
+      }
     }
-  } 
-  // 2. Si NO hay búsqueda (Menú normal)
-  else {
-    searchContainer.classList.add('hidden');
-    menuContainer.classList.remove('hidden');
-
+  } else {
+    // Sin búsqueda - mostrar menú normal
+    if (menuCategories) menuCategories.classList.remove('hidden');
+    if (searchResultsContainer) searchResultsContainer.classList.add('hidden');
+    
     renderProductGrid('empanadas', 'empanadasGrid');
     renderProductGrid('salchipapas', 'salchipapasGrid');
     renderProductGrid('postres', 'postresGrid');
   }
   
-  // Lista admin siempre se actualiza
   renderAdminProductList();
 }
 
-// ===== HTML GENERADOR DE TARJETAS =====
+// ===== HTML GENERADOR DE TARJETAS (Para búsqueda y menú) =====
 function createProductCardHTML(product) {
-  const isTop = product.price === 100; // Lógica simplificada para ejemplo, ajusta si necesitas
+  // Verificar disponibilidad
+  const isAvailable = product.available !== false;
+  
   return `
-    <div class="menu-item ${product.available ? '' : 'unavailable'}" data-id="${product.id}" data-available="${product.available}">
-      <div class="product-badge unavailable-badge ${product.available ? 'hidden' : ''}">Agotado</div>
-      <img src="${product.image || 'img/LOGO.jpg'}" alt="${product.name}" loading="lazy" onerror="this.src='img/LOGO.jpg'">
+    <div class="menu-item ${isAvailable ? '' : 'unavailable'}" data-id="${product.id}" data-available="${isAvailable}">
+      <div class="product-badge unavailable-badge ${isAvailable ? 'hidden' : ''}">Agotado</div>
+      <img src="${product.image || IMAGE_FALLBACK}" alt="${product.name}" loading="lazy" onerror="this.src='${IMAGE_FALLBACK}'">
       <div class="menu-content">
         <h3>${product.name}</h3>
-        <p>${product.description}</p>
+        <p>${product.description || ''}</p>
         <div class="price">$${product.price.toFixed(2)}</div>
         <div class="product-actions">
-          <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${product.available ? '' : 'disabled'}>
+          <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${isAvailable ? '' : 'disabled'}>
             🔥 Pedir ahora
           </button>
         </div>
@@ -352,33 +399,31 @@ function createProductCardHTML(product) {
 function setupSearch() {
   const input = getElement('searchInput');
   const clearBtn = getElement('clearSearch');
-  const container = getElement('search-container');
 
-  // Evento al escribir
-  input.addEventListener('input', (e) => {
-    const val = e.target.value;
-    
-    // Mostrar/ocultar botón borrar
-    if (val) {
-      clearBtn.classList.remove('hidden');
-      container.classList.add('has-content');
-    } else {
-      clearBtn.classList.add('hidden');
-      container.classList.remove('has-content');
+  if (!input) return;
+
+  // 🔍 Cuando el usuario escribe
+  input.addEventListener('input', () => {
+    const value = input.value.trim();
+
+    // Mostrar botón de limpiar
+    if (clearBtn) {
+      clearBtn.classList.toggle('hidden', value.length === 0);
     }
-    
-    // Re-renderizar menú
+
+    // 🔥 IMPORTANTE: volver a renderizar
     renderMenu();
   });
 
-  // Botón borrar
-  clearBtn.addEventListener('click', () => {
-    input.value = '';
-    input.focus();
-    clearBtn.classList.add('hidden');
-    container.classList.remove('has-content');
-    renderMenu();
-  });
+  // ❌ Botón limpiar
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.classList.add('hidden');
+      renderMenu();
+      input.focus();
+    });
+  }
 }
 
 function renderProductGrid(category, gridId) {
@@ -397,7 +442,7 @@ function renderProductGrid(category, gridId) {
   return`
     <div class="menu-item${product.available ? '' : ' unavailable'} ${isTop ? 'top-product' : ''}" data-id="${product.id}" data-available="${product.available}">
       <div class="product-badge unavailable-badge${product.available ? ' hidden' : ''}">Agotado</div>
-      <img src="${product.image || 'img/LOGO.jpg'}" alt="${product.name}" loading="lazy" onerror="this.src='img/LOGO.jpg'">
+      <img src="${product.image || IMAGE_FALLBACK}" alt="${product.name}" loading="lazy" onerror="this.src='${IMAGE_FALLBACK}'">
       <div class="menu-content">
         <h3>
             ${product.name}
@@ -586,11 +631,8 @@ function updateWhatsAppLink(total) {
 
                     _Listo para confirmar_`;
 
-  const businessPhone = '529812100778';
+  const businessPhone = WHATSAPP_PHONE;
   const waUrl = `https://wa.me/${businessPhone}?text=${encodeURIComponent(message)}`;
-  
-  const whatsappLink = getElement('whatsappLink');
-  if (whatsappLink) whatsappLink.href = waUrl;
   
   const paymentWhatsAppBtn = getElement('paymentWhatsAppBtn');
   if (paymentWhatsAppBtn) paymentWhatsAppBtn.href = waUrl;
@@ -767,7 +809,7 @@ async function handleProductFormSubmit(event) {
   const name = getElement('productName').value.trim();
   const description = getElement('productDescription').value.trim();
   const price = parseFloat(getElement('productPrice').value);
-  const image = getElement('productImage').value.trim() || 'img/LOGO.jpg';
+  const image = getElement('productImage').value.trim() || IMAGE_FALLBACK;
   const availableInput = getElement('productAvailable');
   const available = availableInput ? availableInput.checked : true;
   const comboInput = getElement('is_combo');
@@ -1186,7 +1228,7 @@ async function init() {
   setupSearch();
   renderMenu();
   updateCartUI();
-  
+
   // ✅ Ajustar targets táctiles después de renderizar
   adjustTouchTargets();
 }
@@ -1208,7 +1250,7 @@ function setupContactFields() {
 
 // ===== VARIABLES DE SESIÓN =====
 let adminSessionTimeout = null;
-const SESSION_DURATION = 10 * 60 * 1000; // 30 minutos en milisegundos
+// SESSION_DURATION se importa desde config.js
 
 function resetAdminSessionTimer() {
   if (adminSessionTimeout) {
