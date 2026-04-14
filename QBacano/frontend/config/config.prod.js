@@ -1,6 +1,6 @@
 export const CONFIG = {
   api: {
-    baseUrl: 'https://qbacano.onrender.com'
+    baseUrl: 'https://qbacano.onrender.com/api'
   },
 
   whatsapp: {
