@@ -1,39 +1,37 @@
-# Dependencias
+# ===== DEPENDENCIAS =====
 node_modules/
-package-lock.json
 
-# Variables de entorno (NUNCA subir credenciales reales)
+# ===== VARIABLES DE ENTORNO (NUNCA SUBIR) =====
 .env
 .env.local
 .env.production
 .env.*.local
+backend/.env
+frontend/.env
 
-# Archivos de configuración con credenciales reales
+# ===== ARCHIVOS CON CREDENCIALES =====
+frontend/config.js
 config.production.js
 config.local.js
 
-# Logs
+# ===== BUILD / COMPILADOS =====
+dist/
+build/
+*.tsbuildinfo
+
+# ===== LOGS =====
 *.log
 npm-debug.log*
 
-# Editor
+# ===== EDITOR =====
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Sistema operativo
+# ===== SISTEMA OPERATIVO =====
 .DS_Store
 Thumbs.db
 
-# Build
-dist/
-build/
-
-# Caché
+# ===== CACHÉ =====
 .cache/
-
-# Archivos que NO deben estar en GitHub (solicitados por el usuario)
-CODIGO/
-PAYMENT_SETUP.md
-SEGURIDAD.md
