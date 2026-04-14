@@ -1,5 +1,10 @@
 import * as api from './api.js';
-import { WHATSAPP_PHONE, IMAGE_FALLBACK, SESSION_DURATION } from './config.js';
+import {
+  API_BASE_URL,
+  WHATSAPP_PHONE,
+  SESSION_DURATION,
+  IMAGE_FALLBACK
+} from './config/index.js';
 
 // ===== VARIABLES GLOBALES =====
 const STORAGE_CART = 'qbacano_cart';
