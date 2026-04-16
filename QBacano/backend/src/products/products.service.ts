@@ -48,13 +48,31 @@ export class ProductsService {
     const activeCategorySlugs = await this.getActiveCategorySlugs();
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
+      .select(`
+        *,
+        categories!fk_products_category (
+          slug,
+          title,
+          is_active
+        )
+      `)
       .order('id', { ascending: true });
 
     if (error) {
       throw new InternalServerErrorException('No se pudieron obtener productos');
     }
-    return this.filterByActiveCategories(data || [], activeCategorySlugs);
+    
+    // Filtrar por categorías activas usando la relación
+    const filteredData = (data || []).filter(item => {
+      if (!activeCategorySlugs) return true;
+      return item.categories && activeCategorySlugs.has(String(item.categories.slug));
+    });
+    
+    return filteredData.map(item => ({
+      ...item,
+      category: item.categories?.slug || 'uncategorized',
+      category_data: item.categories
+    }));
   }
 
   async findById(id: string) {
@@ -74,18 +92,47 @@ export class ProductsService {
     const activeCategorySlugs = await this.getActiveCategorySlugs();
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
-      .ilike('name', `%${query}%`);
+      .select(`
+        *,
+        categories!fk_products_category (
+          slug,
+          title,
+          is_active
+        )
+      `)
+      .or(`name.ilike.%${query}%,description.ilike.%${query}%`);
 
     if (error) {
       throw new InternalServerErrorException('No se pudo buscar productos');
     }
-    return this.filterByActiveCategories(data || [], activeCategorySlugs);
+    
+    // Filtrar por categorías activas usando la relación
+    const filteredData = (data || []).filter(item => {
+      if (!activeCategorySlugs) return true;
+      return item.categories && activeCategorySlugs.has(String(item.categories.slug));
+    });
+    
+    return filteredData.map(item => ({
+      ...item,
+      category: item.categories?.slug || 'uncategorized',
+      category_data: item.categories
+    }));
   }
 
   async create(productData: CreateProductDto) {
+    // Primero obtener el category_id desde el slug
+    const { data: categoryData, error: categoryError } = await this.supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', productData.category)
+      .single();
+
+    if (categoryError || !categoryData) {
+      throw new InternalServerErrorException('Categoría no encontrada');
+    }
+
     const insertPayload: Record<string, unknown> = {
-      category: productData.category,
+      category_id: categoryData.id,
       name: productData.name,
       description: productData.description,
       price: productData.price,
@@ -109,14 +156,32 @@ export class ProductsService {
   }
 
   async update(id: string, productData: UpdateProductDto) {
+    // Si se está actualizando la categoría, obtener el category_id desde el slug
+    let categoryId = undefined;
+    if (productData.category) {
+      const { data: categoryData, error: categoryError } = await this.supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', productData.category)
+        .single();
+
+      if (categoryError || !categoryData) {
+        throw new InternalServerErrorException('Categoría no encontrada');
+      }
+      categoryId = categoryData.id;
+    }
+
     const updatePayload: Record<string, unknown> = {
-      category: productData.category,
       name: productData.name,
       description: productData.description,
       price: productData.price,
       available: productData.available,
       is_combo: productData.is_combo,
     };
+    
+    if (categoryId !== undefined) {
+      updatePayload.category_id = categoryId;
+    }
     if (productData.image_url) {
       updatePayload.image_url = productData.image_url;
     }

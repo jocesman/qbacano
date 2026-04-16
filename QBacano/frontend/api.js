@@ -34,7 +34,10 @@ async function readErrorMessage(response, fallbackMessage) {
 export async function fetchProducts() {
   const response = await fetch(`${API_BASE_URL}/products`);
   if (!response.ok) throw new Error('Error al obtener productos');
-  return response.json();
+  const data = await response.json();
+  console.log(data);
+  //return response.json();
+  return data;
 }
 
 export async function fetchProductById(id) {
@@ -223,6 +226,33 @@ export async function updateCategoryStatus(id, isActive) {
   if (!response.ok) {
     throw new Error(
       await readErrorMessage(response, 'Error al actualizar estado de categoría'),
+    );
+  }
+  return response.json();
+}
+
+export async function updateCategory(id, categoryData) {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(categoryData),
+  });
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Error al actualizar categoría'),
+    );
+  }
+  return response.json();
+}
+
+export async function deleteCategory(id) {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Error al eliminar categoría'),
     );
   }
   return response.json();

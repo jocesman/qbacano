@@ -333,20 +333,27 @@ function renderMenu() {
 
 function createProductCardHTML(product, isTop = false) {
   const isAvailable = product.available !== false;
+  const isCombo = product.is_combo === true;
   
   return `
-    <div class=\"menu-item ${isAvailable ? '' : 'unavailable'} ${isTop ? 'top-product' : ''}\" data-id=\"${product.id}\" data-available=\"${isAvailable}\">
-      <div class=\"product-badge unavailable-badge ${isAvailable ? 'hidden' : ''}\">Agotado</div>
-      <img src=\"${escapeHtml(product.image || IMAGE_FALLBACK)}\" alt=\"${escapeHtml(product.name)}\" loading=\"lazy\" onerror=\"this.src='${IMAGE_FALLBACK}'\">
-      <div class=\"menu-content\">
-        <h3>${escapeHtml(product.name)} ${product.is_combo ? '🔥' : ''}</h3>
-        <p>${escapeHtml(product.description || '')}</p>
-        <div class=\"price\">$${product.price.toFixed(2)}</div>
-        <div class=\"product-actions\">
-          <button type=\"button\" class=\"btn-add-cart\" data-action=\"add\" data-product-id=\"${product.id}\" ${isAvailable ? '' : 'disabled'}>🔥 Pedir ahora</button>
-          <button type=\"button\" class=\"toggle-availability admin-only hidden\" data-action=\"toggle-availability\" data-product-id=\"${product.id}\">🔘 Activar/Desactivar</button>
-          <button type=\"button\" class=\"btn btn-secondary admin-only hidden\" data-action=\"edit\" data-product-id=\"${product.id}\">✏️ Editar</button>
-          <button type=\"button\" class=\"btn btn-danger admin-only hidden\" data-action=\"delete\" data-product-id=\"${product.id}\">🗑️ Eliminar</button>
+    <div class="menu-item ${!isAvailable ? 'unavailable' : ''}" data-product-id="${product.id}">
+      ${isTop ? '<div class="product-badge available-badge">🔥 Más Popular</div>' : ''}
+      <img 
+        src="${product.image || IMAGE_FALLBACK}" 
+        alt="${escapeHtml(product.name)}" 
+        loading="lazy"
+        decoding="async"
+        onerror="this.src='${IMAGE_FALLBACK}'"
+      >
+      <div class="menu-content">
+        <h3>${escapeHtml(product.name)}</h3>
+        <p>${escapeHtml(product.description)}</p>
+        <div class="price">$${product.price.toFixed(2)}</div>
+        <div class="product-actions">
+          <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${isAvailable ? '' : 'disabled'}>🔥 Pedir ahora</button>
+          <button type="button" class="toggle-availability admin-only hidden" data-action="toggle-availability" data-product-id="${product.id}">🔘 Activar/Desactivar</button>
+          <button type="button" class="btn btn-secondary admin-only hidden" data-action="edit" data-product-id="${product.id}">✏️ Editar</button>
+          <button type="button" class="btn btn-danger admin-only hidden" data-action="delete" data-product-id="${product.id}">🗑️ Eliminar</button>
         </div>
       </div>
     </div>
@@ -427,11 +434,36 @@ function renderAdminCategoryList() {
           <button
             type="button"
             class="btn btn-secondary"
+            data-action="edit-category"
+            data-category-id="${category.id}"
+            data-category-title="${escapeHtml(category.title)}"
+            data-category-slug="${escapeHtml(category.slug)}"
+            aria-label="Editar categoría ${escapeHtml(category.title)}"
+            title="Editar categoría"
+          >
+            ✏️ Editar
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
             data-action="toggle-category"
             data-category-id="${category.id}"
             data-category-active="${category.is_active}"
+            aria-label="${category.is_active ? 'Desactivar' : 'Activar'} categoría ${escapeHtml(category.title)}"
+            title="${category.is_active ? 'Desactivar' : 'Activar'} categoría"
           >
-            ${category.is_active ? 'Desactivar' : 'Activar'}
+            ${category.is_active ? '🔘 Desactivar' : '✅ Activar'}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-action="delete-category"
+            data-category-id="${category.id}"
+            data-category-title="${escapeHtml(category.title)}"
+            aria-label="Eliminar categoría ${escapeHtml(category.title)}"
+            title="Eliminar categoría"
+          >
+            🗑️ Eliminar
           </button>
         </div>
       </div>
@@ -849,6 +881,40 @@ async function deleteProduct(productId) {
   }
 }
 
+async function deleteCategory(categoryId, categoryTitle) {
+  if (!confirm(`¿Eliminar la categoría "${categoryTitle}"? Esta acción no se puede deshacer.`)) return;
+
+  try {
+    await api.deleteCategory(categoryId);
+    await loadCategories();
+    renderMenu();
+    showNotification(`Categoría "${categoryTitle}" eliminada`);
+  } catch (error) {
+    console.error('Error eliminando categoría:', error);
+    showNotification(error.message || 'Error al eliminar la categoría.');
+  }
+}
+
+function openEditCategory(categoryId, categoryTitle, categorySlug) {
+  getElement('categoryId').value = categoryId;
+  getElement('categoryTitle').value = categoryTitle;
+  getElement('categorySlug').value = categorySlug;
+  getElement('categorySubmitBtn').textContent = 'Actualizar categoría';
+  getElement('cancelCategoryEdit').style.display = 'block';
+  
+  // Scroll al formulario
+  getElement('categoryForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetCategoryForm() {
+  getElement('categoryId').value = '';
+  getElement('categoryTitle').value = '';
+  getElement('categorySlug').value = '';
+  getElement('categorySubmitBtn').textContent = 'Crear categoría';
+  getElement('cancelCategoryEdit').style.display = 'none';
+  delete getElement('categorySlug').dataset.edited;
+}
+
 function openEditProduct(productId) {
   const product = products.find(item => item.id === productId);
   if (!product) return;
@@ -1004,6 +1070,8 @@ function setupCategoryForm() {
   const form = getElement('categoryForm');
   const titleInput = getElement('categoryTitle');
   const slugInput = getElement('categorySlug');
+  const idInput = getElement('categoryId');
+  const cancelBtn = getElement('cancelCategoryEdit');
 
   if (!form || !titleInput || !slugInput) return;
 
@@ -1018,27 +1086,68 @@ function setupCategoryForm() {
     slugInput.value = slugifyCategory(slugInput.value);
   });
 
+  cancelBtn?.addEventListener('click', resetCategoryForm);
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const title = titleInput.value.trim();
     const slug = slugifyCategory(slugInput.value.trim() || title);
+    const categoryId = idInput.value.trim();
 
-    if (!title || !slug) {
-      showNotification('Completa nombre y slug de la categoría.');
+    // Validaciones mejoradas
+    if (!title) {
+      showNotification('⚠️ El nombre de la categoría es obligatorio.');
+      titleInput.focus();
+      return;
+    }
+
+    if (title.length < 2) {
+      showNotification('⚠️ El nombre debe tener al menos 2 caracteres.');
+      titleInput.focus();
+      return;
+    }
+
+    if (title.length > 50) {
+      showNotification('⚠️ El nombre no puede exceder 50 caracteres.');
+      titleInput.focus();
+      return;
+    }
+
+    if (!slug) {
+      showNotification('⚠️ El slug (URL) es obligatorio.');
+      slugInput.focus();
+      return;
+    }
+
+    if (slug.length < 2) {
+      showNotification('⚠️ El slug debe tener al menos 2 caracteres.');
+      slugInput.focus();
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      showNotification('⚠️ El slug solo puede contener letras minúsculas, números y guiones.');
+      slugInput.focus();
       return;
     }
 
     try {
-      await createCategoryInDB({ title, slug, is_active: true });
-      titleInput.value = '';
-      slugInput.value = '';
-      delete slugInput.dataset.edited;
+      if (categoryId) {
+        // Editar categoría existente
+        await api.updateCategory(categoryId, { title, slug });
+        showNotification('✅ Categoría actualizada correctamente.');
+      } else {
+        // Crear nueva categoría
+        await createCategoryInDB({ title, slug, is_active: true });
+        showNotification('✅ Categoría creada correctamente.');
+      }
+      
+      resetCategoryForm();
       await loadCategories();
       renderMenu();
-      showNotification('Categoría creada correctamente.');
     } catch (error) {
-      console.error('Error creando categoría:', error);
-      showNotification(error.message || 'No se pudo crear la categoría.');
+      console.error('Error guardando categoría:', error);
+      showNotification(error.message || '❌ No se pudo guardar la categoría.');
     }
   });
 }
@@ -1338,15 +1447,18 @@ function setupMenuEvents() {
     const action = button.dataset.action;
     const productId = button.dataset.productId;
     const categoryId = button.dataset.categoryId;
-    const categoryActive = button.dataset.categoryActive;
-    const method = button.dataset.method;
+    const categoryActive = button.dataset.categoryActive === 'true';
+    const categoryTitle = button.dataset.categoryTitle;
+    const categorySlug = button.dataset.categorySlug;
 
     switch (action) {
-      case 'add': addToCart(productId); break;
+      case 'add-to-cart': addToCart(productId); break;
       case 'toggle-availability': toggleProduct(productId); break;
       case 'edit': openEditProduct(productId); break;
       case 'delete': deleteProduct(productId); break;
       case 'toggle-category': toggleCategory(categoryId, categoryActive); break;
+      case 'edit-category': openEditCategory(categoryId, categoryTitle, categorySlug); break;
+      case 'delete-category': deleteCategory(categoryId, categoryTitle); break;
       case 'pay': handlePayment(method); break;
       case 'whatsapp-order': handleWhatsAppOrder(event); break;
       case 'confirm-whatsapp': handleWhatsAppConfirm(); break;

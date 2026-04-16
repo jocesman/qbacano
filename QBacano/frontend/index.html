@@ -103,6 +103,7 @@
     <div style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
       <h4>📂 Categorías</h4>
       <form id="categoryForm" class="admin-form">
+        <input type="hidden" id="categoryId" value="">
         <label>
           Nombre de categoría
           <input type="text" id="categoryTitle" placeholder="Ej: Empanadas Premium" required>
@@ -111,7 +112,10 @@
           Slug (url interna)
           <input type="text" id="categorySlug" placeholder="ej-empanadas-premium" required>
         </label>
-        <button type="submit" class="btn btn-primary">Crear categoría</button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="submit" class="btn btn-primary" id="categorySubmitBtn">Crear categoría</button>
+          <button type="button" class="btn btn-secondary" id="cancelCategoryEdit" style="display: none;">Cancelar</button>
+        </div>
       </form>
       <div id="adminCategoryList" class="admin-product-list"></div>
     </div>

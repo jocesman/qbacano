@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { AdminAuthGuard } from '../auth/admin-auth.guard';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -39,5 +39,11 @@ export class CategoriesController {
     @Body() body: UpdateCategoryStatusDto,
   ) {
     return this.categoriesService.updateStatus(id, body.is_active);
+  }
+
+  @Delete(':id')
+  @UseGuards(AdminAuthGuard)
+  async remove(@Param('id') id: string) {
+    return this.categoriesService.remove(id);
   }
 }

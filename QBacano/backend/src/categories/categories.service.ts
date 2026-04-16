@@ -112,4 +112,35 @@ export class CategoriesService {
 
     return data;
   }
+
+  async remove(id: string) {
+    // First check if category has products
+    const { data: products, error: productsError } = await this.supabase
+      .from('products')
+      .select('id')
+      .eq('category_id', id)
+      .limit(1);
+
+    if (productsError) {
+      throw new InternalServerErrorException('Error al verificar productos de la categoría');
+    }
+
+    if (products && products.length > 0) {
+      throw new ConflictException('No se puede eliminar la categoría porque tiene productos asociados');
+    }
+
+    // Delete the category
+    const { data, error } = await this.supabase
+      .from('categories')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new NotFoundException('No se pudo eliminar la categoría');
+    }
+
+    return data;
+  }
 }

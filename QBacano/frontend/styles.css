@@ -200,14 +200,24 @@ input:checked + .slider:before {
 }
 
 .btn-secondary {
-  background: var(--white);
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
   color: var(--primary);
-  border: 2px solid var(--white);
+  border: 2px solid var(--primary);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background: transparent;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(211, 84, 0, 0.3);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(211, 84, 0, 0.3);
 }
 
 .btn-whatsapp {
@@ -803,18 +813,37 @@ footer {
   font-size: 0.9rem;
 }
 
+.admin-product-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-product-actions .btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.admin-product-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.admin-product-actions .btn:active {
+  transform: translateY(0);
+}
+
 .btn-danger {
-  background: #c0392b;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
   color: white;
-}
-
-.btn-danger:hover {
-  background: #922b21;
-}
-
-.payment-card button[disabled] {
-  opacity: 0.7;
-  cursor: not-allowed;
+  border: none;
 }
 
 .ubicacion-section {
