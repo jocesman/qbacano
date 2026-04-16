@@ -1,5 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -13,7 +20,9 @@ export class ProductsService {
       .select('*')
       .order('id', { ascending: true });
 
-    if (error) throw new Error(`Error fetching products: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudieron obtener productos');
+    }
     return data || [];
   }
 
@@ -24,7 +33,9 @@ export class ProductsService {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(`Error fetching product: ${error.message}`);
+    if (error || !data) {
+      throw new NotFoundException('Producto no encontrado');
+    }
     return data;
   }
 
@@ -34,11 +45,13 @@ export class ProductsService {
       .select('*')
       .ilike('name', `%${query}%`);
 
-    if (error) throw new Error(`Error searching products: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudo buscar productos');
+    }
     return data || [];
   }
 
-  async create(productData: any) {
+  async create(productData: CreateProductDto) {
     const { data, error } = await this.supabase
       .from('products')
       .insert([{
@@ -46,18 +59,21 @@ export class ProductsService {
         name: productData.name,
         description: productData.description,
         price: productData.price,
-        image_url: productData.image_url || productData.image,
+        image_url: productData.image_url,
+        image_public_id: productData.image_public_id,
         available: productData.available ?? true,
         is_combo: productData.is_combo ?? false,
       }])
       .select()
       .single();
 
-    if (error) throw new Error(`Error creating product: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudo crear el producto');
+    }
     return data;
   }
 
-  async update(id: string, productData: any) {
+  async update(id: string, productData: UpdateProductDto) {
     const { data, error } = await this.supabase
       .from('products')
       .update({
@@ -65,7 +81,8 @@ export class ProductsService {
         name: productData.name,
         description: productData.description,
         price: productData.price,
-        image_url: productData.image_url || productData.image,
+        image_url: productData.image_url,
+        image_public_id: productData.image_public_id,
         available: productData.available,
         is_combo: productData.is_combo,
       })
@@ -73,7 +90,9 @@ export class ProductsService {
       .select()
       .single();
 
-    if (error) throw new Error(`Error updating product: ${error.message}`);
+    if (error || !data) {
+      throw new NotFoundException('No se pudo actualizar el producto');
+    }
     return data;
   }
 
@@ -85,7 +104,9 @@ export class ProductsService {
       .select()
       .single();
 
-    if (error) throw new Error(`Error updating availability: ${error.message}`);
+    if (error || !data) {
+      throw new NotFoundException('No se pudo actualizar disponibilidad');
+    }
     return data;
   }
 
@@ -95,7 +116,9 @@ export class ProductsService {
       .delete()
       .eq('id', id);
 
-    if (error) throw new Error(`Error deleting product: ${error.message}`);
+    if (error) {
+      throw new NotFoundException('No se pudo eliminar el producto');
+    }
     return { success: true };
   }
 
@@ -104,7 +127,9 @@ export class ProductsService {
       .from('products')
       .update({ available: true });
 
-    if (error) throw new Error(`Error updating all products: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudo actualizar productos');
+    }
     return { success: true };
   }
 }

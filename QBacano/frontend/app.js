@@ -10,12 +10,15 @@ import {
 const STORAGE_CART = 'qbacano_cart';
 const STORAGE_PRODUCTS = 'qbacano_products';
 const STORAGE_ADMIN = 'qbacano_admin_settings';
+const STORAGE_ADMIN_TOKEN = 'qbacano_admin_token';
+const MAX_IMAGE_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 let cart = [];
 let products = [];
 let isAdmin = false;
 let deferredPrompt = null;
 let adminSessionTimeout = null;
+let sourceProducts = [];
 
 // ===== UTILIDADES =====
 function getElement(id) {
@@ -25,6 +28,42 @@ function getElement(id) {
 function isMobile() {
   return window.innerWidth <= 768;
 }
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const subirImagenCloudinary = async (file) => {
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Solo se permiten archivos de imagen.');
+  }
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    throw new Error('La imagen supera 2MB.');
+  }
+
+  const signature = await api.getUploadSignature();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('api_key', signature.apiKey);
+  formData.append('timestamp', String(signature.timestamp));
+  formData.append('signature', signature.signature);
+  formData.append('folder', signature.folder);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`,
+    { method: 'POST', body: formData },
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || 'No se pudo subir imagen');
+
+  return { secureUrl: data.secure_url, publicId: data.public_id };
+};
 
 function adjustTouchTargets() {
   const buttons = document.querySelectorAll('button, .btn, [role=\"button\"]');
@@ -87,12 +126,19 @@ function loadAdminSettings() {
   if (saved.showAll && globalToggle) {
     globalToggle.checked = true;
   }
+
+  const token = localStorage.getItem(STORAGE_ADMIN_TOKEN) || '';
+  if (token) {
+    api.setAdminToken(token);
+  }
 }
 
 function saveAdminSettings() {
   const globalToggle = getElement('globalToggle');
+  const token = localStorage.getItem(STORAGE_ADMIN_TOKEN) || '';
   localStorage.setItem(STORAGE_ADMIN, JSON.stringify({
     showAll: globalToggle?.checked || false,
+    hasToken: Boolean(token),
   }));
 }
 
@@ -130,9 +176,11 @@ async function loadProducts() {
     const dbProducts = await fetchProductsFromDB();
     if (dbProducts.length > 0) {
       products = dbProducts;
+      sourceProducts = dbProducts.slice();
       saveProducts();
     } else if (!products.length) {
       products = defaultProducts.slice();
+      sourceProducts = products.slice();
       saveProducts();
       showNotification('No hay productos en la base de datos. Usando menú local.');
     }
@@ -140,10 +188,12 @@ async function loadProducts() {
     console.error('Error cargando productos:', error);
     if (!products.length) {
       products = defaultProducts.slice();
+      sourceProducts = products.slice();
       saveProducts();
     }
     showNotification('No fue posible conectar con el servidor. Usando datos locales.');
   }
+  sourceProducts = products.slice();
 }
 
 // ===== CRUD PRODUCTOS (BACKEND) =====
@@ -159,6 +209,7 @@ async function updateProductInDB(product) {
     description: product.description,
     price: product.price,
     image_url: product.image,
+    image_public_id: product.image_public_id,
     available: product.available,
     is_combo: product.is_combo,
   });
@@ -174,8 +225,9 @@ async function updateProductAvailabilityInDB(productId, available) {
 
 async function applyGlobalAvailability() {
   try {
-    await fetch(`${api.API_BASE_URL}/products/all/available`, { method: 'PUT' });
+    await api.setAllProductsAvailable();
     products = products.map(product => ({ ...product, available: true }));
+    sourceProducts = products.slice();
     saveProducts();
     renderMenu();
   } catch (error) {
@@ -239,17 +291,16 @@ function renderMenu() {
   renderAdminProductList();
 }
 
-function createProductCardHTML(product) {
+function createProductCardHTML(product, isTop = false) {
   const isAvailable = product.available !== false;
-  const isTop = product.price === Math.max(...products.filter(p => p.category === product.category).map(p => p.price));
   
   return `
     <div class=\"menu-item ${isAvailable ? '' : 'unavailable'} ${isTop ? 'top-product' : ''}\" data-id=\"${product.id}\" data-available=\"${isAvailable}\">
       <div class=\"product-badge unavailable-badge ${isAvailable ? 'hidden' : ''}\">Agotado</div>
-      <img src=\"${product.image || IMAGE_FALLBACK}\" alt=\"${product.name}\" loading=\"lazy\" onerror=\"this.src='${IMAGE_FALLBACK}'\">
+      <img src=\"${escapeHtml(product.image || IMAGE_FALLBACK)}\" alt=\"${escapeHtml(product.name)}\" loading=\"lazy\" onerror=\"this.src='${IMAGE_FALLBACK}'\">
       <div class=\"menu-content\">
-        <h3>${product.name} ${product.is_combo ? '🔥' : ''}</h3>
-        <p>${product.description || ''}</p>
+        <h3>${escapeHtml(product.name)} ${product.is_combo ? '🔥' : ''}</h3>
+        <p>${escapeHtml(product.description || '')}</p>
         <div class=\"price\">$${product.price.toFixed(2)}</div>
         <div class=\"product-actions\">
           <button type=\"button\" class=\"btn-add-cart\" data-action=\"add\" data-product-id=\"${product.id}\" ${isAvailable ? '' : 'disabled'}>🔥 Pedir ahora</button>
@@ -273,7 +324,9 @@ function renderProductGrid(category, gridId) {
     return;
   }
 
-  grid.innerHTML = items.map(product => createProductCardHTML(product)).join('');
+  grid.innerHTML = items
+    .map((product, index) => createProductCardHTML(product, index === 0))
+    .join('');
 }
 
 function renderAdminProductList() {
@@ -286,8 +339,8 @@ function renderAdminProductList() {
   list.innerHTML = products.map(product => `
     <div class=\"admin-product-item\">
       <div>
-        <h5>${product.name}</h5>
-        <p>${product.category} • $${product.price.toFixed(2)} • ${product.available ? 'Disponible' : 'Agotado'}</p>
+        <h5>${escapeHtml(product.name)}</h5>
+        <p>${escapeHtml(product.category)} • $${product.price.toFixed(2)} • ${product.available ? 'Disponible' : 'Agotado'}</p>
       </div>
       <div class=\"admin-product-actions\">
         <button type=\"button\" class=\"btn btn-secondary\" data-action=\"edit\" data-product-id=\"${product.id}\">Editar</button>
@@ -312,13 +365,24 @@ function setupSearch() {
   }
 
   if (value.length === 0) {
+    products = sourceProducts.slice();
     renderMenu();
     return;
   }
 
   try {
     const results = await api.searchProducts(value);
-    products = results; // 👈 IMPORTANTE
+    const normalized = results.map(product => ({
+      id: String(product.id),
+      category: String(product.category || '').toLowerCase().trim(),
+      name: product.name,
+      description: product.description,
+      price: parseFloat(product.price),
+      image: product.image_url || IMAGE_FALLBACK,
+      available: product.available ?? true,
+      is_combo: product.is_combo ?? false,
+    }));
+    products = normalized;
     renderMenu();
   } catch (error) {
     console.error('Error en búsqueda:', error);
@@ -329,6 +393,7 @@ function setupSearch() {
     clearBtn.addEventListener('click', () => {
       input.value = '';
       clearBtn.classList.add('hidden');
+      products = sourceProducts.slice();
       renderMenu();
       input.focus();
     });
@@ -678,6 +743,10 @@ function openEditProduct(productId) {
   getElement('productDescription').value = product.description;
   getElement('productPrice').value = product.price;
   getElement('productImage').value = product.image || '';
+  const imagePreview = getElement('productImagePreview');
+  if (imagePreview) imagePreview.src = product.image || IMAGE_FALLBACK;
+  const imageInput = getElement('productImageFile');
+  if (imageInput) imageInput.value = '';
 
   const availableInput = getElement('productAvailable');
   if (availableInput) availableInput.checked = product.available !== false;
@@ -696,6 +765,10 @@ function resetProductForm() {
   getElement('productDescription').value = '';
   getElement('productPrice').value = '';
   getElement('productImage').value = '';
+  const imagePreview = getElement('productImagePreview');
+  if (imagePreview) imagePreview.src = IMAGE_FALLBACK;
+  const imageInput = getElement('productImageFile');
+  if (imageInput) imageInput.value = '';
 
   const availableInput = getElement('productAvailable');
   if (availableInput) availableInput.checked = true;
@@ -711,7 +784,10 @@ async function handleProductFormSubmit(event) {
   const name = getElement('productName').value.trim();
   const description = getElement('productDescription').value.trim();
   const price = parseFloat(getElement('productPrice').value);
-  const image = getElement('productImage').value.trim() || IMAGE_FALLBACK;
+  const imageInput = getElement('productImageFile');
+  const selectedImageFile = imageInput?.files?.[0];
+  let image = getElement('productImage').value.trim() || IMAGE_FALLBACK;
+  let imagePublicId = '';
   const available = getElement('productAvailable')?.checked ?? true;
   const is_combo = getElement('is_combo')?.checked ?? false;
 
@@ -721,11 +797,38 @@ async function handleProductFormSubmit(event) {
   }
 
   try {
+    if (selectedImageFile) {
+      showNotification('⏳ Subiendo imagen...');
+      const uploadResult = await subirImagenCloudinary(selectedImageFile);
+      image = uploadResult.secureUrl;
+      imagePublicId = uploadResult.publicId;
+      getElement('productImage').value = image;
+    }
+
     if (id) {
-      await updateProductInDB({ id, category, name, description, price, image, available, is_combo });
+      await updateProductInDB({
+        id,
+        category,
+        name,
+        description,
+        price,
+        image,
+        image_public_id: imagePublicId || undefined,
+        available,
+        is_combo,
+      });
       showNotification(`${name} actualizado`);
     } else {
-      await createProductInDB({ category, name, description, price, image_url: image, available, is_combo });
+      await createProductInDB({
+        category,
+        name,
+        description,
+        price,
+        image_url: image,
+        image_public_id: imagePublicId || undefined,
+        available,
+        is_combo,
+      });
       showNotification(`${name} agregado al menú`);
     }
 
@@ -741,8 +844,24 @@ async function handleProductFormSubmit(event) {
 function setupProductForm() {
   const form = getElement('productForm');
   const cancelEdit = getElement('cancelEdit');
+  const imageInput = getElement('productImageFile');
+  const imageUrlInput = getElement('productImage');
+  const imagePreview = getElement('productImagePreview');
   form?.addEventListener('submit', handleProductFormSubmit);
   cancelEdit?.addEventListener('click', resetProductForm);
+
+  imageInput?.addEventListener('change', () => {
+    const selected = imageInput.files?.[0];
+    if (!selected || !imagePreview) return;
+    const objectUrl = URL.createObjectURL(selected);
+    imagePreview.src = objectUrl;
+  });
+
+  imageUrlInput?.addEventListener('input', () => {
+    if (!imagePreview) return;
+    imagePreview.src = imageUrlInput.value.trim() || IMAGE_FALLBACK;
+  });
+
   resetProductForm();
 }
 
@@ -771,6 +890,10 @@ function setupAdminPanel() {
 
       if (result.valid) {
         isAdmin = true;
+        if (result.token) {
+          localStorage.setItem(STORAGE_ADMIN_TOKEN, result.token);
+          api.setAdminToken(result.token);
+        }
         toggleAdminMode(true);
         adminPanel?.classList.remove('hidden');
         showNotification('✅ Acceso concedido. Sesión expira en 10 min');
@@ -861,6 +984,8 @@ function resetAdminSessionTimer() {
 
 function logoutAdmin() {
   isAdmin = false;
+  localStorage.removeItem(STORAGE_ADMIN_TOKEN);
+  api.setAdminToken('');
   toggleAdminMode(false);
   getElement('adminPanel')?.classList.add('hidden');
   showNotification('🔒 Sesión de administrador expirada por inactividad');

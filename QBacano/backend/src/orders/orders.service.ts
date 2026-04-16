@@ -1,5 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -24,7 +30,9 @@ export class OrdersService {
     }
 
     const { data, error } = await query.limit(200);
-    if (error) throw new Error(`Error fetching orders: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudieron obtener las órdenes');
+    }
     return data || [];
   }
 
@@ -35,11 +43,13 @@ export class OrdersService {
       .eq('id', id)
       .single();
 
-    if (error) throw new Error(`Error fetching order: ${error.message}`);
+    if (error || !data) {
+      throw new NotFoundException('Orden no encontrada');
+    }
     return data;
   }
 
-  async create(orderData: any) {
+  async create(orderData: CreateOrderDto) {
     const { data, error } = await this.supabase
       .from('orders')
       .insert([{
@@ -54,7 +64,9 @@ export class OrdersService {
       .select()
       .single();
 
-    if (error) throw new Error(`Error creating order: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudo crear la orden');
+    }
     return data;
   }
 
@@ -66,7 +78,9 @@ export class OrdersService {
       .select()
       .single();
 
-    if (error) throw new Error(`Error updating order: ${error.message}`);
+    if (error || !data) {
+      throw new NotFoundException('No se pudo actualizar el estado de la orden');
+    }
     return data;
   }
 
@@ -76,7 +90,9 @@ export class OrdersService {
       .delete()
       .eq('id', id);
 
-    if (error) throw new Error(`Error deleting order: ${error.message}`);
+    if (error) {
+      throw new NotFoundException('No se pudo eliminar la orden');
+    }
     return { success: true };
   }
 }

@@ -3,6 +3,18 @@
  */
 import { API_BASE_URL } from './config/index.js';
 
+let adminToken = '';
+
+export function setAdminToken(token = '') {
+  adminToken = token;
+}
+
+function authHeaders(extraHeaders = {}) {
+  return adminToken
+    ? { ...extraHeaders, Authorization: `Bearer ${adminToken}` }
+    : extraHeaders;
+}
+
 // ===== PRODUCTOS =====
 export async function fetchProducts() {
   const response = await fetch(`${API_BASE_URL}/products`);
@@ -25,7 +37,7 @@ export async function searchProducts(query) {
 export async function createProduct(product) {
   const response = await fetch(`${API_BASE_URL}/products`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(product)
   });
   if (!response.ok) throw new Error('Error al crear producto');
@@ -35,7 +47,7 @@ export async function createProduct(product) {
 export async function updateProduct(id, product) {
   const response = await fetch(`${API_BASE_URL}/products/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(product)
   });
   if (!response.ok) throw new Error('Error al actualizar producto');
@@ -45,7 +57,7 @@ export async function updateProduct(id, product) {
 export async function updateProductAvailability(id, available) {
   const response = await fetch(`${API_BASE_URL}/products/${id}/availability`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ available })
   });
   if (!response.ok) throw new Error('Error al actualizar disponibilidad');
@@ -54,7 +66,8 @@ export async function updateProductAvailability(id, available) {
 
 export async function deleteProduct(id) {
   const response = await fetch(`${API_BASE_URL}/products/${id}`, {
-    method: 'DELETE'
+    method: 'DELETE',
+    headers: authHeaders(),
   });
   if (!response.ok) throw new Error('Error al eliminar producto');
   return response.json();
@@ -67,7 +80,9 @@ export async function fetchOrders(filters = {}) {
   if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
   if (filters.dateTo) params.append('dateTo', filters.dateTo);
   
-  const response = await fetch(`${API_BASE_URL}/orders?${params}`);
+  const response = await fetch(`${API_BASE_URL}/orders?${params}`, {
+    headers: authHeaders(),
+  });
   if (!response.ok) throw new Error('Error al obtener órdenes');
   return response.json();
 }
@@ -85,7 +100,7 @@ export async function createOrder(orderData) {
 export async function updateOrderStatus(id, status) {
   const response = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ status })
   });
   if (!response.ok) throw new Error('Error al actualizar estado');
@@ -109,7 +124,29 @@ export async function fetchStats(filters = {}) {
   if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
   if (filters.dateTo) params.append('dateTo', filters.dateTo);
   
-  const response = await fetch(`${API_BASE_URL}/stats?${params}`);
+  const response = await fetch(`${API_BASE_URL}/stats?${params}`, {
+    headers: authHeaders(),
+  });
   if (!response.ok) throw new Error('Error al obtener estadísticas');
+  return response.json();
+}
+
+export async function setAllProductsAvailable() {
+  const response = await fetch(`${API_BASE_URL}/products/all/available`, {
+    method: 'PUT',
+    headers: authHeaders(),
+  });
+  if (!response.ok) throw new Error('Error al actualizar disponibilidad global');
+  return response.json();
+}
+
+export async function getUploadSignature(folder = 'qbacano/products') {
+  const response = await fetch(`${API_BASE_URL}/uploads/sign`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ folder }),
+  });
+
+  if (!response.ok) throw new Error('Error al firmar subida de imagen');
   return response.json();
 }

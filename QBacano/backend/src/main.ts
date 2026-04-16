@@ -2,13 +2,20 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // Configurar CORS
+
+  const configService = app.get(ConfigService);
+  const corsOrigins = configService.get<string[]>('app.corsOrigins') || [];
+  const nodeEnv = configService.get<string>('app.nodeEnv');
+  const defaultDevOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+  const allowedOrigins =
+    corsOrigins.length > 0 ? corsOrigins : nodeEnv === 'development' ? defaultDevOrigins : [];
+
   app.enableCors({
-    origin: true, // 👈 PERMITE TODOS (dinámico)
+    origin: allowedOrigins,
     credentials: true,
   });
 

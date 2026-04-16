@@ -5,6 +5,8 @@ import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
 import { StatsModule } from './stats/stats.module';
 import { SupabaseModule } from './supabase.module';
+import { AuthModule } from './auth/auth.module';
+import { UploadsModule } from './uploads/uploads.module';
 import config from './config';
 
 @Module({
@@ -13,11 +15,13 @@ import config from './config';
       isGlobal: true,
       load: [config],
     }),
+    AuthModule,
     SupabaseModule,
     ProductsModule,
     OrdersModule,
     AdminModule,
     StatsModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

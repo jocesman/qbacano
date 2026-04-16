@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, InternalServerErrorException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
@@ -18,7 +18,9 @@ export class StatsService {
     }
 
     const { data, error } = await query;
-    if (error) throw new Error(`Error fetching stats: ${error.message}`);
+    if (error) {
+      throw new InternalServerErrorException('No se pudieron cargar estadísticas');
+    }
 
     const orders = data || [];
     const today = new Date().toDateString();

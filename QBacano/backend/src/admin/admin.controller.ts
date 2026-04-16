@@ -1,12 +1,13 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { ValidateAdminDto } from './dto/validate-admin.dto';
 
 @Controller('api/admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Post('validate')
-  async validateKey(@Body('key') key: string) {
-    return this.adminService.validateAccessKey(key);
+  async validateKey(@Body() body: ValidateAdminDto) {
+    return this.adminService.validateAccessKey(body.key);
   }
 }
