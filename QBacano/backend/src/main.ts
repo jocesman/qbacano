@@ -11,11 +11,24 @@ async function bootstrap() {
   const corsOrigins = configService.get<string[]>('app.corsOrigins') || [];
   const nodeEnv = configService.get<string>('app.nodeEnv');
   const defaultDevOrigins = ['http://localhost:5173', 'http://localhost:3000'];
-  const allowedOrigins =
-    corsOrigins.length > 0 ? corsOrigins : nodeEnv === 'development' ? defaultDevOrigins : [];
+  const allowedOrigins = (
+    corsOrigins.length > 0 ? corsOrigins : nodeEnv === 'development' ? defaultDevOrigins : []
+  ).map((origin) => origin.replace(/\/$/, ''));
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const isVercelPreview = /^https:\/\/.*\.vercel\.app$/i.test(normalizedOrigin);
+      const isAllowed = allowedOrigins.includes(normalizedOrigin);
+
+      if (isAllowed || isVercelPreview) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Origen no permitido por CORS'), false);
+    },
     credentials: true,
   });
 
