@@ -7,6 +7,7 @@ import { StatsModule } from './stats/stats.module';
 import { SupabaseModule } from './supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { CategoriesModule } from './categories/categories.module';
 import config from './config';
 
 @Module({
@@ -22,6 +23,7 @@ import config from './config';
     AdminModule,
     StatsModule,
     UploadsModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}

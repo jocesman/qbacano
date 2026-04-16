@@ -182,3 +182,48 @@ export async function getUploadSignature(folder = 'qbacano/products') {
   }
   return response.json();
 }
+
+// ===== CATEGORÍAS =====
+export async function fetchCategories() {
+  const response = await fetch(`${API_BASE_URL}/categories`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Error al obtener categorías'));
+  }
+  return response.json();
+}
+
+export async function fetchAllCategories() {
+  const response = await fetch(`${API_BASE_URL}/categories/all`, {
+    headers: authHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Error al obtener categorías'));
+  }
+  return response.json();
+}
+
+export async function createCategory(category) {
+  const response = await fetch(`${API_BASE_URL}/categories`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(category),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Error al crear categoría'));
+  }
+  return response.json();
+}
+
+export async function updateCategoryStatus(id, isActive) {
+  const response = await fetch(`${API_BASE_URL}/categories/${id}/status`, {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, 'Error al actualizar estado de categoría'),
+    );
+  }
+  return response.json();
+}

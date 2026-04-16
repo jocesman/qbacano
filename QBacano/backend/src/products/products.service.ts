@@ -20,7 +20,32 @@ export class ProductsService {
     );
   }
 
+  private async getActiveCategorySlugs(): Promise<Set<string> | null> {
+    const { data, error } = await this.supabase
+      .from('categories')
+      .select('slug')
+      .eq('is_active', true);
+
+    if (error) {
+      if (error.message?.toLowerCase().includes('relation')) {
+        return null;
+      }
+      throw new InternalServerErrorException('No se pudieron cargar categorías');
+    }
+
+    return new Set((data || []).map((category) => String(category.slug)));
+  }
+
+  private filterByActiveCategories(
+    items: any[],
+    activeSlugs: Set<string> | null,
+  ) {
+    if (!activeSlugs) return items;
+    return items.filter((item) => activeSlugs.has(String(item.category)));
+  }
+
   async findAll() {
+    const activeCategorySlugs = await this.getActiveCategorySlugs();
     const { data, error } = await this.supabase
       .from('products')
       .select('*')
@@ -29,7 +54,7 @@ export class ProductsService {
     if (error) {
       throw new InternalServerErrorException('No se pudieron obtener productos');
     }
-    return data || [];
+    return this.filterByActiveCategories(data || [], activeCategorySlugs);
   }
 
   async findById(id: string) {
@@ -46,6 +71,7 @@ export class ProductsService {
   }
 
   async search(query: string) {
+    const activeCategorySlugs = await this.getActiveCategorySlugs();
     const { data, error } = await this.supabase
       .from('products')
       .select('*')
@@ -54,7 +80,7 @@ export class ProductsService {
     if (error) {
       throw new InternalServerErrorException('No se pudo buscar productos');
     }
-    return data || [];
+    return this.filterByActiveCategories(data || [], activeCategorySlugs);
   }
 
   async create(productData: CreateProductDto) {

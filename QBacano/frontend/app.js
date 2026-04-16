@@ -19,6 +19,7 @@ let isAdmin = false;
 let deferredPrompt = null;
 let adminSessionTimeout = null;
 let sourceProducts = [];
+let categories = [];
 
 // ===== UTILIDADES =====
 function getElement(id) {
@@ -104,6 +105,14 @@ const defaultProducts = [
     available: true,
     is_combo: false,
   },
+];
+
+const defaultCategories = [
+  { id: 'cat-empanadas', slug: 'empanadas', title: 'Empanadas Artesanales', is_active: true },
+  { id: 'cat-salchipapas', slug: 'salchipapas', title: "Salchipapas Q'Bacano", is_active: true },
+  { id: 'cat-postres', slug: 'postres', title: 'Postres Caseros', is_active: true },
+  { id: 'cat-extras', slug: 'extras', title: 'Extras', is_active: true },
+  { id: 'cat-bebidas', slug: 'bebidas', title: 'Bebidas', is_active: true },
 ];
 
 // ===== STORAGE =====
@@ -196,6 +205,24 @@ async function loadProducts() {
   sourceProducts = products.slice();
 }
 
+async function loadCategories() {
+  try {
+    const data = isAdmin ? await api.fetchAllCategories() : await api.fetchCategories();
+    categories = (data || []).map((category) => ({
+      id: String(category.id),
+      slug: String(category.slug || '').toLowerCase().trim(),
+      title: category.title || category.slug,
+      is_active: category.is_active !== false,
+    }));
+    if (!categories.length) {
+      categories = defaultCategories.slice();
+    }
+  } catch (error) {
+    console.error('Error cargando categorías:', error);
+    categories = defaultCategories.slice();
+  }
+}
+
 // ===== CRUD PRODUCTOS (BACKEND) =====
 async function createProductInDB(product) {
   const data = await api.createProduct(product);
@@ -223,6 +250,14 @@ async function updateProductAvailabilityInDB(productId, available) {
   await api.updateProductAvailability(productId, available);
 }
 
+async function createCategoryInDB(category) {
+  return api.createCategory(category);
+}
+
+async function updateCategoryStatusInDB(categoryId, isActive) {
+  return api.updateCategoryStatus(categoryId, isActive);
+}
+
 async function applyGlobalAvailability() {
   try {
     await api.setAllProductsAvailable();
@@ -242,13 +277,19 @@ function renderMenu() {
   const searchTerm = (searchInput?.value || '').toLowerCase().trim();
   const searchResultsContainer = getElement('search-results-container');
   const menuCategories = getElement('menu-categories');
+  const activeCategorySlugs = new Set(
+    categories.filter((category) => category.is_active).map((category) => category.slug),
+  );
+  const visibleProducts = products.filter((product) =>
+    activeCategorySlugs.has(String(product.category)),
+  );
 
   if (searchTerm.length > 0) {
     if (menuCategories) menuCategories.classList.add('hidden');
     if (searchResultsContainer) {
       searchResultsContainer.classList.remove('hidden');
       
-      const filteredProducts = products
+      const filteredProducts = visibleProducts
         .map(product => {
           const name = (product.name || '').toLowerCase();
           const desc = (product.description || '').toLowerCase();
@@ -282,13 +323,12 @@ function renderMenu() {
   } else {
     if (menuCategories) menuCategories.classList.remove('hidden');
     if (searchResultsContainer) searchResultsContainer.classList.add('hidden');
-    
-    renderProductGrid('empanadas', 'empanadasGrid');
-    renderProductGrid('salchipapas', 'salchipapasGrid');
-    renderProductGrid('postres', 'postresGrid');
+    renderDynamicCategorySections(visibleProducts);
   }
   
   renderAdminProductList();
+  renderAdminCategoryList();
+  renderCategoryOptions();
 }
 
 function createProductCardHTML(product, isTop = false) {
@@ -313,19 +353,35 @@ function createProductCardHTML(product, isTop = false) {
   `;
 }
 
-function renderProductGrid(category, gridId) {
-  const grid = getElement(gridId);
-  if (!grid) return;
-  const items = products.filter(product => product.category === category);
-  items.sort((a, b) => b.price - a.price);
-  
-  if (items.length === 0) {
-    grid.innerHTML = '<p class=\"empty-message\">No hay productos en esta categoría todavía.</p>';
+function renderDynamicCategorySections(visibleProducts) {
+  const menuCategories = getElement('menu-categories');
+  if (!menuCategories) return;
+
+  const activeCategories = categories.filter((category) => category.is_active);
+
+  if (!activeCategories.length) {
+    menuCategories.innerHTML = '<p class="empty-message">No hay categorías activas en este momento.</p>';
     return;
   }
 
-  grid.innerHTML = items
-    .map((product, index) => createProductCardHTML(product, index === 0))
+  menuCategories.innerHTML = activeCategories
+    .map((category) => {
+      const categoryProducts = visibleProducts
+        .filter((product) => product.category === category.slug)
+        .sort((a, b) => b.price - a.price);
+
+      const cards =
+        categoryProducts.length > 0
+          ? categoryProducts
+              .map((product, index) => createProductCardHTML(product, index === 0))
+              .join('')
+          : '<p class="empty-message">No hay productos en esta categoría todavía.</p>';
+
+      return `
+        <h2 class="section-title">${escapeHtml(category.title)}</h2>
+        <div class="menu-grid">${cards}</div>
+      `;
+    })
     .join('');
 }
 
@@ -348,6 +404,60 @@ function renderAdminProductList() {
       </div>
     </div>
   `).join('');
+}
+
+function renderAdminCategoryList() {
+  const list = getElement('adminCategoryList');
+  if (!list) return;
+
+  if (!categories.length) {
+    list.innerHTML = '<p class="empty-message">No hay categorías registradas.</p>';
+    return;
+  }
+
+  list.innerHTML = categories
+    .map(
+      (category) => `
+      <div class="admin-product-item">
+        <div>
+          <h5>${escapeHtml(category.title)}</h5>
+          <p>${escapeHtml(category.slug)} • ${category.is_active ? 'Activa' : 'Inactiva'}</p>
+        </div>
+        <div class="admin-product-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-action="toggle-category"
+            data-category-id="${category.id}"
+            data-category-active="${category.is_active}"
+          >
+            ${category.is_active ? 'Desactivar' : 'Activar'}
+          </button>
+        </div>
+      </div>
+    `,
+    )
+    .join('');
+}
+
+function renderCategoryOptions() {
+  const categorySelect = getElement('productCategory');
+  if (!categorySelect) return;
+
+  const selected = categorySelect.value;
+
+  categorySelect.innerHTML = categories
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.slug)}">${escapeHtml(category.title)}${category.is_active ? '' : ' (inactiva)'}</option>`,
+    )
+    .join('');
+
+  if (selected && categories.some((category) => category.slug === selected)) {
+    categorySelect.value = selected;
+  } else if (categories.length > 0) {
+    categorySelect.value = categories[0].slug;
+  }
 }
 
 // ===== BÚSQUEDA =====
@@ -467,7 +577,14 @@ ${combo.name}
   }
 
   // Extras
-  const extras = products.filter(p => p.category === 'extras' || p.category === 'bebidas');
+  const activeCategorySlugs = new Set(
+    categories.filter((category) => category.is_active).map((category) => category.slug),
+  );
+  const extras = products.filter(
+    (p) =>
+      (p.category === 'extras' || p.category === 'bebidas') &&
+      activeCategorySlugs.has(String(p.category)),
+  );
   if (extras.length > 0) {
     setTimeout(async () => {
       const selectedExtras = await showExtrasModal(extras);
@@ -760,7 +877,10 @@ function openEditProduct(productId) {
 function resetProductForm() {
   getElement('formTitle').textContent = 'Agregar nuevo producto';
   getElement('productId').value = '';
-  getElement('productCategory').value = 'empanadas';
+  const categorySelect = getElement('productCategory');
+  if (categorySelect && categories.length > 0) {
+    categorySelect.value = categories[0].slug;
+  }
   getElement('productName').value = '';
   getElement('productDescription').value = '';
   getElement('productPrice').value = '';
@@ -871,6 +991,72 @@ function setupProductForm() {
   resetProductForm();
 }
 
+function slugifyCategory(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+function setupCategoryForm() {
+  const form = getElement('categoryForm');
+  const titleInput = getElement('categoryTitle');
+  const slugInput = getElement('categorySlug');
+
+  if (!form || !titleInput || !slugInput) return;
+
+  titleInput.addEventListener('input', () => {
+    if (!slugInput.dataset.edited) {
+      slugInput.value = slugifyCategory(titleInput.value);
+    }
+  });
+
+  slugInput.addEventListener('input', () => {
+    slugInput.dataset.edited = 'true';
+    slugInput.value = slugifyCategory(slugInput.value);
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const title = titleInput.value.trim();
+    const slug = slugifyCategory(slugInput.value.trim() || title);
+
+    if (!title || !slug) {
+      showNotification('Completa nombre y slug de la categoría.');
+      return;
+    }
+
+    try {
+      await createCategoryInDB({ title, slug, is_active: true });
+      titleInput.value = '';
+      slugInput.value = '';
+      delete slugInput.dataset.edited;
+      await loadCategories();
+      renderMenu();
+      showNotification('Categoría creada correctamente.');
+    } catch (error) {
+      console.error('Error creando categoría:', error);
+      showNotification(error.message || 'No se pudo crear la categoría.');
+    }
+  });
+}
+
+async function toggleCategory(categoryId, activeValue) {
+  const isActive = activeValue === 'true';
+  try {
+    await updateCategoryStatusInDB(categoryId, !isActive);
+    await loadCategories();
+    await loadProducts();
+    renderMenu();
+    showNotification(`Categoría ${isActive ? 'desactivada' : 'activada'} correctamente.`);
+  } catch (error) {
+    console.error('Error actualizando categoría:', error);
+    showNotification(error.message || 'No se pudo actualizar la categoría.');
+  }
+}
+
 // ===== ADMIN PANEL =====
 function setupAdminPanel() {
   const adminToggle = getElement('adminToggle');
@@ -900,8 +1086,10 @@ function setupAdminPanel() {
           localStorage.setItem(STORAGE_ADMIN_TOKEN, result.token);
           api.setAdminToken(result.token);
         }
+        await loadCategories();
         toggleAdminMode(true);
         adminPanel?.classList.remove('hidden');
+        renderMenu();
         showNotification('✅ Acceso concedido. Sesión expira en 10 min');
         resetAdminSessionTimer();
       } else {
@@ -992,6 +1180,7 @@ function logoutAdmin() {
   isAdmin = false;
   localStorage.removeItem(STORAGE_ADMIN_TOKEN);
   api.setAdminToken('');
+  loadCategories().then(() => renderMenu());
   toggleAdminMode(false);
   getElement('adminPanel')?.classList.add('hidden');
   showNotification('🔒 Sesión de administrador expirada por inactividad');
@@ -1148,6 +1337,8 @@ function setupMenuEvents() {
 
     const action = button.dataset.action;
     const productId = button.dataset.productId;
+    const categoryId = button.dataset.categoryId;
+    const categoryActive = button.dataset.categoryActive;
     const method = button.dataset.method;
 
     switch (action) {
@@ -1155,6 +1346,7 @@ function setupMenuEvents() {
       case 'toggle-availability': toggleProduct(productId); break;
       case 'edit': openEditProduct(productId); break;
       case 'delete': deleteProduct(productId); break;
+      case 'toggle-category': toggleCategory(categoryId, categoryActive); break;
       case 'pay': handlePayment(method); break;
       case 'whatsapp-order': handleWhatsAppOrder(event); break;
       case 'confirm-whatsapp': handleWhatsAppConfirm(); break;
@@ -1374,9 +1566,11 @@ async function init() {
   window.removeFromCart = removeFromCart;
 
   loadCart();
+  await loadCategories();
   await loadProducts();
   setupAdminPanel();
   setupProductForm();
+  setupCategoryForm();
   setupMenuEvents();
   setupContactFields();
   setupPWA();
