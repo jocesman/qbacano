@@ -1,11 +1,11 @@
 const CACHE_NAME = 'qbacano-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/manifest.json',
-  '/img/logo.png'
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './manifest.json',
+  './img/logo.png'
 ];
 
 // Instalar SW
@@ -81,7 +81,7 @@ self.addEventListener('fetch', event => {
             .catch(() => {
               // Fallback para imágenes rotas
               if (event.request.destination === 'image') {
-                return caches.match('/img/logo.png');
+                return caches.match('./img/logo.png');
               }
             });
         })

@@ -786,8 +786,7 @@ async function handleProductFormSubmit(event) {
   const price = parseFloat(getElement('productPrice').value);
   const imageInput = getElement('productImageFile');
   const selectedImageFile = imageInput?.files?.[0];
-  let image = getElement('productImage').value.trim() || IMAGE_FALLBACK;
-  let imagePublicId = '';
+  let image = getElement('productImage').value.trim();
   const available = getElement('productAvailable')?.checked ?? true;
   const is_combo = getElement('is_combo')?.checked ?? false;
 
@@ -801,34 +800,41 @@ async function handleProductFormSubmit(event) {
       showNotification('⏳ Subiendo imagen...');
       const uploadResult = await subirImagenCloudinary(selectedImageFile);
       image = uploadResult.secureUrl;
-      imagePublicId = uploadResult.publicId;
       getElement('productImage').value = image;
     }
 
     if (id) {
-      await updateProductInDB({
+      const updatePayload = {
         id,
         category,
         name,
         description,
         price,
-        image,
-        image_public_id: imagePublicId || undefined,
         available,
         is_combo,
+      };
+      if (image) {
+        updatePayload.image = image;
+      }
+
+      await updateProductInDB({
+        ...updatePayload,
       });
       showNotification(`${name} actualizado`);
     } else {
-      await createProductInDB({
+      const createPayload = {
         category,
         name,
         description,
         price,
-        image_url: image,
-        image_public_id: imagePublicId || undefined,
         available,
         is_combo,
-      });
+      };
+      if (image) {
+        createPayload.image_url = image;
+      }
+
+      await createProductInDB(createPayload);
       showNotification(`${name} agregado al menú`);
     }
 

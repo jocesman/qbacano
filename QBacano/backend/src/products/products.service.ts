@@ -14,6 +14,12 @@ export class ProductsService {
     @Inject('SUPABASE_CLIENT') private readonly supabase: SupabaseClient,
   ) {}
 
+  private compactPayload(payload: Record<string, unknown>) {
+    return Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => value !== undefined),
+    );
+  }
+
   async findAll() {
     const { data, error } = await this.supabase
       .from('products')
@@ -52,18 +58,21 @@ export class ProductsService {
   }
 
   async create(productData: CreateProductDto) {
+    const insertPayload: Record<string, unknown> = {
+      category: productData.category,
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      available: productData.available ?? true,
+      is_combo: productData.is_combo ?? false,
+    };
+    if (productData.image_url) {
+      insertPayload.image_url = productData.image_url;
+    }
+
     const { data, error } = await this.supabase
       .from('products')
-      .insert([{
-        category: productData.category,
-        name: productData.name,
-        description: productData.description,
-        price: productData.price,
-        image_url: productData.image_url,
-        image_public_id: productData.image_public_id,
-        available: productData.available ?? true,
-        is_combo: productData.is_combo ?? false,
-      }])
+      .insert([this.compactPayload(insertPayload)])
       .select()
       .single();
 
@@ -74,18 +83,21 @@ export class ProductsService {
   }
 
   async update(id: string, productData: UpdateProductDto) {
+    const updatePayload: Record<string, unknown> = {
+      category: productData.category,
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      available: productData.available,
+      is_combo: productData.is_combo,
+    };
+    if (productData.image_url) {
+      updatePayload.image_url = productData.image_url;
+    }
+
     const { data, error } = await this.supabase
       .from('products')
-      .update({
-        category: productData.category,
-        name: productData.name,
-        description: productData.description,
-        price: productData.price,
-        image_url: productData.image_url,
-        image_public_id: productData.image_public_id,
-        available: productData.available,
-        is_combo: productData.is_combo,
-      })
+      .update(this.compactPayload(updatePayload))
       .eq('id', id)
       .select()
       .single();

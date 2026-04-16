@@ -1,6 +1,6 @@
 export const CONFIG = {
   api: {
-    baseUrl: 'http://localhost:3000/api'
+    baseUrl: 'http://localhost:3001/api'
   },
 
   whatsapp: {

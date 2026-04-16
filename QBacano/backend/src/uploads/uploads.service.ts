@@ -13,8 +13,13 @@ export class UploadsService {
     const defaultFolder = this.configService.get<string>('app.cloudinary.folder');
 
     if (!cloudName || !apiKey || !apiSecret) {
+      const missingVars = [
+        !cloudName ? 'CLOUDINARY_CLOUD_NAME' : null,
+        !apiKey ? 'CLOUDINARY_API_KEY' : null,
+        !apiSecret ? 'CLOUDINARY_API_SECRET' : null,
+      ].filter(Boolean);
       throw new InternalServerErrorException(
-        'Cloudinary no está configurado correctamente',
+        `Cloudinary no está configurado correctamente. Faltan: ${missingVars.join(', ')}`,
       );
     }
 

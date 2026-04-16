@@ -15,6 +15,21 @@ function authHeaders(extraHeaders = {}) {
     : extraHeaders;
 }
 
+async function readErrorMessage(response, fallbackMessage) {
+  let message = fallbackMessage;
+  try {
+    const payload = await response.json();
+    if (payload?.message) {
+      message = Array.isArray(payload.message)
+        ? payload.message.join(', ')
+        : payload.message;
+    }
+  } catch {
+    // noop
+  }
+  return message;
+}
+
 // ===== PRODUCTOS =====
 export async function fetchProducts() {
   const response = await fetch(`${API_BASE_URL}/products`);
@@ -40,7 +55,9 @@ export async function createProduct(product) {
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(product)
   });
-  if (!response.ok) throw new Error('Error al crear producto');
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Error al crear producto'));
+  }
   return response.json();
 }
 
@@ -50,7 +67,9 @@ export async function updateProduct(id, product) {
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(product)
   });
-  if (!response.ok) throw new Error('Error al actualizar producto');
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Error al actualizar producto'));
+  }
   return response.json();
 }
 
@@ -147,6 +166,19 @@ export async function getUploadSignature(folder = 'qbacano/products') {
     body: JSON.stringify({ folder }),
   });
 
-  if (!response.ok) throw new Error('Error al firmar subida de imagen');
+  if (!response.ok) {
+    let message = 'Error al firmar subida de imagen';
+    try {
+      const payload = await response.json();
+      if (payload?.message) {
+        message = Array.isArray(payload.message)
+          ? payload.message.join(', ')
+          : payload.message;
+      }
+    } catch {
+      // noop
+    }
+    throw new Error(message);
+  }
   return response.json();
 }
