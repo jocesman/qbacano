@@ -130,12 +130,6 @@ function saveProducts() {
 }
 
 function loadAdminSettings() {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_ADMIN) || '{}');
-  const globalToggle = getElement('globalToggle');
-  if (saved.showAll && globalToggle) {
-    globalToggle.checked = true;
-  }
-
   const token = localStorage.getItem(STORAGE_ADMIN_TOKEN) || '';
   if (token) {
     api.setAdminToken(token);
@@ -143,12 +137,7 @@ function loadAdminSettings() {
 }
 
 function saveAdminSettings() {
-  const globalToggle = getElement('globalToggle');
-  const token = localStorage.getItem(STORAGE_ADMIN_TOKEN) || '';
-  localStorage.setItem(STORAGE_ADMIN, JSON.stringify({
-    showAll: globalToggle?.checked || false,
-    hasToken: Boolean(token),
-  }));
+  // reservado para configuraciones futuras
 }
 
 // ===== CARGA DE PRODUCTOS (BACKEND) =====
@@ -258,18 +247,7 @@ async function updateCategoryStatusInDB(categoryId, isActive) {
   return api.updateCategoryStatus(categoryId, isActive);
 }
 
-async function applyGlobalAvailability() {
-  try {
-    await api.setAllProductsAvailable();
-    products = products.map(product => ({ ...product, available: true }));
-    sourceProducts = products.slice();
-    saveProducts();
-    renderMenu();
-  } catch (error) {
-    console.error('Error actualizando disponibilidad global:', error);
-    showNotification('Error al activar todos los productos.');
-  }
-}
+
 
 // ===== RENDERIZADO =====
 function renderMenu() {
@@ -350,7 +328,7 @@ function createProductCardHTML(product, isTop = false) {
         <p>${escapeHtml(product.description)}</p>
         <div class="price">$${product.price.toFixed(2)}</div>
         <div class="product-actions">
-          <button type="button" class="btn-add-cart" data-action="add" data-product-id="${product.id}" ${isAvailable ? '' : 'disabled'}>🔥 Pedir ahora</button>
+          <button type="button" class="btn-add-cart" data-action="add-to-cart" data-product-id="${product.id}" ${isAvailable ? '' : 'disabled'}>🔥 Pedir ahora</button>
           <button type="button" class="toggle-availability admin-only hidden" data-action="toggle-availability" data-product-id="${product.id}">🔘 Activar/Desactivar</button>
           <button type="button" class="btn btn-secondary admin-only hidden" data-action="edit" data-product-id="${product.id}">✏️ Editar</button>
           <button type="button" class="btn btn-danger admin-only hidden" data-action="delete" data-product-id="${product.id}">🗑️ Eliminar</button>
@@ -396,18 +374,31 @@ function renderAdminProductList() {
   const list = getElement('adminProductList');
   if (!list) return;
   if (!products.length) {
-    list.innerHTML = '<p class=\"empty-message\">No hay productos para administrar.</p>';
+    list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:2rem;font-size:0.9rem;">No hay productos para administrar.</p>';
     return;
   }
   list.innerHTML = products.map(product => `
-    <div class=\"admin-product-item\">
-      <div>
-        <h5>${escapeHtml(product.name)}</h5>
-        <p>${escapeHtml(product.category)} • $${product.price.toFixed(2)} • ${product.available ? 'Disponible' : 'Agotado'}</p>
+    <div class="admin-item" data-product-id="${product.id}">
+      <img
+        class="admin-item__thumb"
+        src="${product.image || IMAGE_FALLBACK}"
+        alt="${escapeHtml(product.name)}"
+        onerror="this.src='${IMAGE_FALLBACK}'"
+      >
+      <div class="admin-item__body">
+        <div class="admin-item__name">
+          ${escapeHtml(product.name)}
+          ${product.is_combo ? '<span class="admin-item__badge">🔥 Combo</span>' : ''}
+        </div>
+        <div class="admin-item__meta">${escapeHtml(product.category)}</div>
+        <div class="admin-item__price">$${product.price.toFixed(2)}</div>
       </div>
-      <div class=\"admin-product-actions\">
-        <button type=\"button\" class=\"btn btn-secondary\" data-action=\"edit\" data-product-id=\"${product.id}\">Editar</button>
-        <button type=\"button\" class=\"btn btn-danger\" data-action=\"delete\" data-product-id=\"${product.id}\">Eliminar</button>
+      <div class="admin-item__actions">
+        <button type="button" class="aib aib--edit" data-action="edit" data-product-id="${product.id}">✏️ Editar</button>
+        <button type="button" class="aib aib--delete" data-action="delete" data-product-id="${product.id}">🗑️ Eliminar</button>
+        <button type="button" class="aib ${product.available ? 'aib--on' : 'aib--off'}" data-action="toggle-availability" data-product-id="${product.id}">
+          ${product.available ? '✅ Disponible' : '⛔ Agotado'}
+        </button>
       </div>
     </div>
   `).join('');
@@ -418,58 +409,49 @@ function renderAdminCategoryList() {
   if (!list) return;
 
   if (!categories.length) {
-    list.innerHTML = '<p class="empty-message">No hay categorías registradas.</p>';
+    list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:2rem;font-size:0.9rem;">No hay categorías registradas.</p>';
     return;
   }
 
-  list.innerHTML = categories
-    .map(
-      (category) => `
-      <div class="admin-product-item">
-        <div>
-          <h5>${escapeHtml(category.title)}</h5>
-          <p>${escapeHtml(category.slug)} • ${category.is_active ? 'Activa' : 'Inactiva'}</p>
+  list.innerHTML = categories.map(category => `
+    <div class="admin-item" data-category-id="${category.id}">
+      <div class="admin-item__icon">${getCategoryIcon(category.slug)}</div>
+      <div class="admin-item__body">
+        <div class="admin-item__name">
+          ${escapeHtml(category.title)}
+          ${!category.is_active ? '<span class="admin-item__badge admin-item__badge--inactive">Inactiva</span>' : ''}
         </div>
-        <div class="admin-product-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-action="edit-category"
-            data-category-id="${category.id}"
-            data-category-title="${escapeHtml(category.title)}"
-            data-category-slug="${escapeHtml(category.slug)}"
-            aria-label="Editar categoría ${escapeHtml(category.title)}"
-            title="Editar categoría"
-          >
-            ✏️ Editar
-          </button>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-action="toggle-category"
-            data-category-id="${category.id}"
-            data-category-active="${category.is_active}"
-            aria-label="${category.is_active ? 'Desactivar' : 'Activar'} categoría ${escapeHtml(category.title)}"
-            title="${category.is_active ? 'Desactivar' : 'Activar'} categoría"
-          >
-            ${category.is_active ? '🔘 Desactivar' : '✅ Activar'}
-          </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            data-action="delete-category"
-            data-category-id="${category.id}"
-            data-category-title="${escapeHtml(category.title)}"
-            aria-label="Eliminar categoría ${escapeHtml(category.title)}"
-            title="Eliminar categoría"
-          >
-            🗑️ Eliminar
-          </button>
-        </div>
+        <div class="admin-item__meta">/${escapeHtml(category.slug)}</div>
       </div>
-    `,
-    )
-    .join('');
+      <div class="admin-item__actions">
+        <button type="button" class="aib aib--edit" data-action="edit-category" data-category-id="${category.id}" data-category-title="${category.title}" data-category-slug="${category.slug}">✏️ Editar</button>
+        <button type="button" class="aib aib--delete" data-action="delete-category" data-category-id="${category.id}" data-category-title="${category.title}">🗑️ Eliminar</button>
+        <button type="button" class="aib ${category.is_active ? 'aib--on' : 'aib--off'}" data-action="toggle-category" data-category-id="${category.id}" data-category-active="${category.is_active}">
+          ${category.is_active ? '✅ Activa' : '⛔ Inactiva'}
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getCategoryIcon(slug) {
+  const icons = {
+    'empanadas': '🥟',
+    'salchipapas': '🍟',
+    'postres': '🍮',
+    'bebidas': '🥤',
+    'extras': '➕',
+    'combos': '🔥',
+    'desayunos': '🍳',
+    'almuerzos': '🍽️',
+    'snacks': '🧆',
+    'ensaladas': '🥗',
+    'sopas': '🍲',
+    'carnes': '🥩',
+    'mariscos': '🦐',
+    'vegetariano': '🥦',
+  };
+  return icons[slug] || '🏷️';
 }
 
 function renderCategoryOptions() {
@@ -707,19 +689,47 @@ function updateWhatsAppLink(total) {
   const customerName = getElement('customerName')?.value.trim() || 'No especificado';
   const customerPhone = getElement('customerPhone')?.value.trim() || 'No especificado';
   const customerAddress = getElement('customerAddress')?.value.trim() || 'No especificado';
-  const items = cart.map(item => `${item.quantity}x ${item.name} ($${(item.price * item.quantity).toFixed(2)})`).join('');
+  
+  // Generar fecha y hora actual
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  
+  // Formatear items con mejor estructura
+  const items = cart.map((item, index) => {
+    const itemTotal = (item.price * item.quantity).toFixed(2);
+    return `${index + 1}. ${item.name}\n   ${item.quantity}x $${item.price.toFixed(2)} = $${itemTotal}`;
+  }).join('\n\n');
 
-  const message = `*Nuevo pedido - Q'Bacano*
-                      - Nombre: ${customerName}
-                      - Teléfono: ${customerPhone}
-                      - Dirección: ${customerAddress}
-                      - *Pedido:*
-                      ${items}
+  const message = `*Sabores Q'Bacano - Nuevo Pedido* 
 
-                      *Total productos: $${total.toFixed(2)}*
-                      *Envío:* Costo adicional según distancia (Servicio de Mandadito)
+*Fecha:* ${dateStr} | ${timeStr}
+*Pedido ID:* #${Date.now().toString().slice(-6)}
 
-_Listo para confirmar_`;
+*Datos del Cliente:*
+*Nombre:* ${customerName}
+*Teléfono:* ${customerPhone}
+*Dirección:* ${customerAddress}
+
+*Detalles del Pedido:*
+${items}
+
+*Resumen:*
+*Subtotal Productos:* $${total.toFixed(2)}
+*Costo de Envío:* Según zona (confirmar al momento)
+*Forma de Pago:* Efectivo / Transferencia
+
+*Total Estimado:* $${total.toFixed(2)} + envío
+
+---
+
+*Tiempo estimado de preparación:* 25-35 minutos
+*Medio de entrega:* Delivery (Mandadito) / Recoger en local
+
+*Por favor confirma tu pedido para comenzar con la preparación.*
+*¡Gracias por tu preferencia!* 
+
+*Sabores Q'Bacano - Street Food*`;
 
   const waUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
   
@@ -829,7 +839,6 @@ async function saveOrderToBackend() {
     customer_phone: customerPhone,
     customer_address: customerAddress,
     items: cart.map(item => ({
-      id: item.id,
       name: item.name,
       price: item.price,
       quantity: item.quantity
@@ -902,8 +911,7 @@ function openEditCategory(categoryId, categoryTitle, categorySlug) {
   getElement('categorySubmitBtn').textContent = 'Actualizar categoría';
   getElement('cancelCategoryEdit').style.display = 'block';
   
-  // Scroll al formulario
-  getElement('categoryForm').scrollIntoView({ behavior: 'smooth' });
+  getElement('categoryModal')?.classList.remove('hidden');
 }
 
 function resetCategoryForm() {
@@ -919,7 +927,11 @@ function openEditProduct(productId) {
   const product = products.find(item => item.id === productId);
   if (!product) return;
 
-  getElement('formTitle').textContent = 'Editar producto';
+  const modalTitle = getElement('productModalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = '✏️ Editar Producto';
+  }
+  
   getElement('productId').value = product.id;
   getElement('productCategory').value = product.category;
   getElement('productName').value = product.name;
@@ -941,7 +953,10 @@ function openEditProduct(productId) {
 }
 
 function resetProductForm() {
-  getElement('formTitle').textContent = 'Agregar nuevo producto';
+  const modalTitle = getElement('productModalTitle');
+  if (modalTitle) {
+    modalTitle.textContent = '📦 Nuevo Producto';
+  }
   getElement('productId').value = '';
   const categorySelect = getElement('productCategory');
   if (categorySelect && categories.length > 0) {
@@ -951,16 +966,10 @@ function resetProductForm() {
   getElement('productDescription').value = '';
   getElement('productPrice').value = '';
   getElement('productImage').value = '';
-  const imagePreview = getElement('productImagePreview');
-  if (imagePreview) imagePreview.src = IMAGE_FALLBACK;
-  const imageInput = getElement('productImageFile');
-  if (imageInput) imageInput.value = '';
-
-  const availableInput = getElement('productAvailable');
-  if (availableInput) availableInput.checked = true;
-
-  const comboInput = getElement('is_combo');
-  if (comboInput) comboInput.checked = false;
+  getElement('productImageFile').value = '';
+  getElement('productImagePreview').src = 'img/logo.png';
+  getElement('productAvailable').checked = true;
+  getElement('is_combo').checked = false;
 }
 
 async function handleProductFormSubmit(event) {
@@ -1153,7 +1162,7 @@ function setupCategoryForm() {
 }
 
 async function toggleCategory(categoryId, activeValue) {
-  const isActive = activeValue === 'true';
+  const isActive = activeValue === true || activeValue === 'true';
   try {
     await updateCategoryStatusInDB(categoryId, !isActive);
     await loadCategories();
@@ -1166,62 +1175,205 @@ async function toggleCategory(categoryId, activeValue) {
   }
 }
 
+// ===== MODAL DE LOGIN ADMIN =====
+function openAdminLoginModal() {
+  const modal = getElement('adminLoginModal');
+  if (!modal) {
+    createAdminLoginModal();
+    setTimeout(() => openAdminLoginModal(), 100);
+    return;
+  }
+  
+  modal.classList.remove('hidden');
+  const keyInput = getElement('adminKey');
+  if (keyInput) {
+    keyInput.value = '';
+    keyInput.focus();
+  }
+}
+
+function closeAdminLoginModal() {
+  const modal = getElement('adminLoginModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function createAdminLoginModal() {
+  const modalHTML = `
+    <div id="adminLoginModal" class="admin-login-modal hidden">
+      <div class="admin-login-content">
+        <div class="admin-login-header">
+          <div class="admin-login-logo">
+            <img src="img/logo.png" alt="Q'Bacano" width="48" height="48">
+            <div>
+              <h3>Panel Administrativo</h3>
+              <p>Sabores Q'Bacano</p>
+            </div>
+          </div>
+          <button type="button" class="admin-login-close" aria-label="Cerrar">×</button>
+        </div>
+        
+        <div class="admin-login-body">
+          <div class="admin-login-icon">🔐</div>
+          <h4>Acceso Seguro</h4>
+          <p>Ingresa tu clave de administrador para acceder al panel de control</p>
+          
+          <form id="adminLoginForm" class="admin-login-form">
+            <div class="admin-input-group">
+              <label for="adminKey">Clave de acceso</label>
+              <div class="admin-input-wrapper">
+                <input 
+                  type="password" 
+                  id="adminKey" 
+                  name="adminKey"
+                  placeholder="Ingresa tu clave"
+                  required
+                  autocomplete="current-password"
+                  minlength="4"
+                  maxlength="50"
+                >
+                <button type="button" class="admin-toggle-password" aria-label="Mostrar/ocultar contraseña">
+                  <span class="eye-icon">👁️</span>
+                </button>
+              </div>
+            </div>
+            
+            <div class="admin-login-actions">
+              <button type="button" class="btn btn-secondary" id="adminLoginCancel">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary" id="adminLoginSubmit">
+                <span class="btn-text">Acceder</span>
+                <span class="btn-loading hidden">⏳ Verificando...</span>
+              </button>
+            </div>
+          </form>
+          
+          <div class="admin-login-footer">
+            <small>La sesión expirará automáticamente por seguridad</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  setupAdminLoginModal();
+}
+
+function setupAdminLoginModal() {
+  const modal = getElement('adminLoginModal');
+  const form = getElement('adminLoginForm');
+  const closeBtn = getElement('adminLoginClose');
+  const cancelBtn = getElement('adminLoginCancel');
+  const toggleBtn = getElement('adminTogglePassword');
+  const keyInput = getElement('adminKey');
+  
+  // Cerrar modal
+  closeBtn?.addEventListener('click', closeAdminLoginModal);
+  cancelBtn?.addEventListener('click', closeAdminLoginModal);
+  
+  // Cerrar al hacer click fuera
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeAdminLoginModal();
+  });
+  
+  // Toggle password visibility
+  toggleBtn?.addEventListener('click', () => {
+    if (keyInput.type === 'password') {
+      keyInput.type = 'text';
+      toggleBtn.querySelector('.eye-icon').textContent = '👁️‍🗨️';
+    } else {
+      keyInput.type = 'password';
+      toggleBtn.querySelector('.eye-icon').textContent = '👁️';
+    }
+  });
+  
+  // Submit form
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await handleAdminLogin();
+  });
+  
+  // Enter key submit
+  keyInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdminLogin();
+    }
+  });
+}
+
+async function handleAdminLogin() {
+  const keyInput = getElement('adminKey');
+  const submitBtn = getElement('adminLoginSubmit');
+  const key = keyInput?.value?.trim();
+  
+  if (!key) {
+    showNotification('⚠️ La clave de acceso es obligatoria');
+    keyInput?.focus();
+    return;
+  }
+  
+  // Loading state
+  submitBtn?.classList.add('loading');
+  submitBtn?.querySelector('.btn-text')?.classList.add('hidden');
+  submitBtn?.querySelector('.btn-loading')?.classList.remove('hidden');
+  if (submitBtn) submitBtn.disabled = true;
+  keyInput?.setAttribute('disabled', 'true');
+  
+  try {
+    showNotification('⏳ Verificando clave...');
+    const result = await api.validateAdminKey(key);
+    
+    if (result.valid) {
+      isAdmin = true;
+      if (result.token) {
+        localStorage.setItem(STORAGE_ADMIN_TOKEN, result.token);
+        api.setAdminToken(result.token);
+      }
+      
+      await loadCategories();
+      toggleAdminMode(true);
+      getElement('adminPanel')?.classList.remove('hidden');
+      renderMenu();
+      
+      closeAdminLoginModal();
+      showNotification('✅ Acceso concedido. Sesión expira en 10 min');
+      resetAdminSessionTimer();
+    } else {
+      showNotification('❌ Clave incorrecta, no activa o no existe.');
+      keyInput?.focus();
+      keyInput?.select();
+    }
+  } catch (err) {
+    console.error('Error verificando admin:', err);
+    showNotification('❌ Error de conexión con el servidor.');
+  } finally {
+    // Reset loading state
+    submitBtn?.classList.remove('loading');
+    submitBtn?.querySelector('.btn-text')?.classList.remove('hidden');
+    submitBtn?.querySelector('.btn-loading')?.classList.add('hidden');
+    if (submitBtn) submitBtn.disabled = false;
+    keyInput?.removeAttribute('disabled');
+  }
+}
+
 // ===== ADMIN PANEL =====
 function setupAdminPanel() {
   const adminToggle = getElement('adminToggle');
   const adminPanel = getElement('adminPanel');
   const closeAdmin = getElement('closeAdmin');
-  const globalToggle = getElement('globalToggle');
-  
-  loadAdminSettings();
 
   adminToggle?.addEventListener('click', async () => {
     if (isAdmin) {
       logoutAdmin();
       return;
     }
-    
-    const key = prompt('Ingrese la clave de acceso de administrador:');
-    if (!key || key.trim() === '') return;
-
-    showNotification('⏳ Verificando clave...');
-    
-    try {
-      const result = await api.validateAdminKey(key.trim());
-
-      if (result.valid) {
-        isAdmin = true;
-        if (result.token) {
-          localStorage.setItem(STORAGE_ADMIN_TOKEN, result.token);
-          api.setAdminToken(result.token);
-        }
-        await loadCategories();
-        toggleAdminMode(true);
-        adminPanel?.classList.remove('hidden');
-        renderMenu();
-        showNotification('✅ Acceso concedido. Sesión expira en 10 min');
-        resetAdminSessionTimer();
-      } else {
-        alert('❌ Clave incorrecta, no activa o no existe.');
-      }
-    } catch (err) {
-      console.error('Error verificando admin:', err);
-      alert('❌ Error de conexión con el servidor.');
-    }
+    openAdminLoginModal();
   });
 
   closeAdmin?.addEventListener('click', () => {
     adminPanel?.classList.add('hidden');
-  });
-
-  globalToggle?.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      applyGlobalAvailability();
-      showNotification('Todos los productos están disponibles');
-    } else {
-      showNotification('Ahora puedes cambiar la disponibilidad manualmente');
-    }
-    saveAdminSettings();
   });
 
   // Botón de estadísticas
@@ -1262,13 +1414,14 @@ function setupAdminPanel() {
 
 function toggleAdminMode(active) {
   const adminToggle = getElement('adminToggle');
+  const adminIcon = adminToggle?.querySelector('.admin-icon');
   if (active) {
     document.body.classList.add('admin-mode');
-    if (adminToggle) adminToggle.textContent = '🔓';
+    if (adminIcon) adminIcon.textContent = '';
     showNotification('Modo administrador activado');
   } else {
     document.body.classList.remove('admin-mode');
-    if (adminToggle) adminToggle.textContent = '🔒';
+    if (adminIcon) adminIcon.textContent = '';
     showNotification('Modo administrador desactivado');
   }
 }
@@ -1284,6 +1437,8 @@ function resetAdminSessionTimer() {
     }, SESSION_DURATION);
   }
 }
+
+
 
 function logoutAdmin() {
   isAdmin = false;
@@ -1440,6 +1595,46 @@ function setupAdminFilters() {
 
 // ===== EVENTOS =====
 function setupMenuEvents() {
+  // ── Botones Nueva Categoría y Nuevo Producto ──
+  getElement('createCategoryBtn')?.addEventListener('click', () => {
+    resetCategoryForm();
+    getElement('categoryModal')?.classList.remove('hidden');
+  });
+
+  getElement('closeCategoryModal')?.addEventListener('click', () => {
+    getElement('categoryModal')?.classList.add('hidden');
+    resetCategoryForm();
+  });
+
+  getElement('categoryModal')?.addEventListener('click', (e) => {
+    if (e.target === getElement('categoryModal')) {
+      getElement('categoryModal').classList.add('hidden');
+      resetCategoryForm();
+    }
+  });
+
+  getElement('createProductBtn')?.addEventListener('click', () => {
+    resetProductForm();
+    getElement('productModal')?.classList.remove('hidden');
+  });
+
+  getElement('closeProductModal')?.addEventListener('click', () => {
+    getElement('productModal')?.classList.add('hidden');
+    resetProductForm();
+  });
+
+  getElement('productModal')?.addEventListener('click', (e) => {
+    if (e.target === getElement('productModal')) {
+      getElement('productModal').classList.add('hidden');
+      resetProductForm();
+    }
+  });
+
+  // ── Cerrar panel de Estadísticas ──
+  getElement('closeStatsBtn')?.addEventListener('click', () => {
+    getElement('adminStatsContainer')?.classList.add('hidden');
+  });
+
   document.body.addEventListener('click', (event) => {
     const button = event.target.closest('[data-action]');
     if (!button) return;

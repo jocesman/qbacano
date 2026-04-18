@@ -31,7 +31,10 @@
       <a href="#postres">Postres</a>
       <a href="#ubicacion">Ubicación</a>
       <a href="#pedido">Pedir</a>
-      <button id="adminToggle" class="admin-btn" type="button" title="Modo Administrador">🔒</button>
+      <button id="adminToggle" class="admin-btn" type="button" title="Panel Administrativo" aria-label="Acceder al panel de administración">
+        <span class="admin-icon">⚙️</span>
+        <span class="admin-text">Admin</span>
+      </button>
     </nav>
   </header>
 
@@ -43,97 +46,72 @@
 
   <!-- Panel de Admin (Oculto por defecto) -->
   <div id="adminPanel" class="admin-panel hidden">
+
+    <!-- Header del panel -->
     <div class="admin-header">
-      <h3>🔧 Panel de Control</h3>
-      <button id="closeAdmin" class="close-btn" aria-label="Cerrar panel">×</button>
-    </div>
-    <p>Activa/desactiva, agrega, modifica o elimina productos desde aquí. Los cambios se guardan automáticamente en este dispositivo.</p>
-    <div class="admin-controls">
-      <label class="switch">
-        <input type="checkbox" id="globalToggle">
-        <span class="slider"></span>
-      </label>
-      <span>Mostrar todos los productos</span>
-    </div>
-    <form id="productForm" class="admin-form">
-      <h4 id="formTitle">Agregar nuevo producto</h4>
-      <input type="hidden" id="productId" value="">
-      <label>
-        Categoría
-        <select id="productCategory"></select>
-      </label>
-      <label>
-        Nombre
-        <input type="text" id="productName" required>
-      </label>
-      <label>
-        Descripción
-        <textarea id="productDescription" rows="2" required></textarea>
-      </label>
-      <label>
-        Precio
-        <input type="number" id="productPrice" min="0" step="0.01" required>
-      </label>
-      <input type="hidden" id="productImage">
-      <label>
-        Subir imagen
-        <input type="file" id="productImageFile" accept="image/*">
-      </label>
-      <div class="image-preview-wrapper">
-        <img id="productImagePreview" src="img/logo.png" alt="Vista previa del producto" style="width:100%;max-width:240px;border-radius:12px;object-fit:cover;">
-      </div>
-      <div class="form-group">
-        <label>Opciones del producto</label>
-        <div class="checkbox-group">
-          <label class="checkbox-item">
-            <input type="checkbox" id="productAvailable">
-            <span>Disponible</span>
-          </label>
-          <label class="checkbox-item">
-            <input type="checkbox" id="is_combo">
-            <span>Es combo 🔥</span>
-          </label>
+      <div class="admin-header-content">
+        <div class="admin-header-info">
+          <div class="admin-header-logo">
+            <span class="admin-header-icon">🍽️</span>
+            <div>
+              <h3>Panel de Control</h3>
+              <p>Sabores Q'Bacano</p>
+            </div>
+          </div>
         </div>
+        <button id="closeAdmin" class="admin-close-btn" aria-label="Cerrar panel">✕</button>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Guardar producto</button>
-        <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
-      </div>
-    </form>
-    <div style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
-      <h4>📂 Categorías</h4>
-      <form id="categoryForm" class="admin-form">
-        <input type="hidden" id="categoryId" value="">
-        <label>
-          Nombre de categoría
-          <input type="text" id="categoryTitle" placeholder="Ej: Empanadas Premium" required>
-        </label>
-        <label>
-          Slug (url interna)
-          <input type="text" id="categorySlug" placeholder="ej-empanadas-premium" required>
-        </label>
-        <div style="display: flex; gap: 0.5rem;">
-          <button type="submit" class="btn btn-primary" id="categorySubmitBtn">Crear categoría</button>
-          <button type="button" class="btn btn-secondary" id="cancelCategoryEdit" style="display: none;">Cancelar</button>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="admin-quick-actions">
+      <button type="button" id="viewStatsBtn" class="btn-stats">
+        📊 Ver Estadísticas y Pedidos
+      </button>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="admin-main-content">
+
+      <!-- Categorías -->
+      <section class="admin-section">
+        <div class="section-header">
+          <h4>🏷️ Categorías</h4>
+          <button type="button" id="createCategoryBtn" class="btn-create">
+            + Nueva Categoría
+          </button>
         </div>
-      </form>
-      <div id="adminCategoryList" class="admin-product-list"></div>
+        <div id="adminCategoryList" class="admin-list"></div>
+      </section>
+
+      <!-- Productos -->
+      <section class="admin-section">
+        <div class="section-header">
+          <h4>📦 Productos</h4>
+          <button type="button" id="createProductBtn" class="btn-create">
+            + Nuevo Producto
+          </button>
+        </div>
+        <div id="adminProductList" class="admin-list"></div>
+      </section>
+
     </div>
-    <div id="adminProductList" class="admin-product-list"></div>
-    <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
-      <button type="button" id="viewStatsBtn" class="btn btn-secondary" style="width:100%">📊 Ver Estadísticas e Historial</button>
-    </div>
-    <div id="adminStatsContainer" class="hidden" style="margin-top: 1rem;">
-      <!-- PANEL DE FILTROS -->
+
+    <!-- Estadísticas (oculto por defecto) -->
+    <div id="adminStatsContainer" class="admin-stats-container hidden">
+      <div class="stats-header">
+        <h4>📊 Estadísticas y Pedidos</h4>
+        <button type="button" id="closeStatsBtn" class="btn-close-stats">✕</button>
+      </div>
       <div class="filters-panel">
-        <h4 style="margin-bottom: 1rem; color: var(--primary);">🔍 Filtros</h4>
+        <p class="filters-title">🔎 Filtrar pedidos</p>
         <div class="filter-group">
-          <label>Estado del pedido:</label>
+          <label>Estado:</label>
           <div class="filter-buttons">
-            <button type="button" class="filter-btn active" data-filter-status="all">🔄 Todos</button>
+            <button type="button" class="filter-btn active" data-filter-status="all">Todos</button>
             <button type="button" class="filter-btn" data-filter-status="delivered">✅ Entregados</button>
             <button type="button" class="filter-btn" data-filter-status="pending">⏳ Pendientes</button>
-            <button type="button" class="filter-btn" data-filter-status="confirmed">🔔 Confirmados</button>
+            <button type="button" class="filter-btn" data-filter-status="confirmed">📋 Confirmados</button>
             <button type="button" class="filter-btn" data-filter-status="cancelled">❌ Cancelados</button>
           </div>
         </div>
@@ -151,10 +129,91 @@
             <button type="button" id="clearDateFilter" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">🗑️ Limpiar</button>
           </div>
         </div>
-        <button type="button" id="applyFilters" class="btn btn-primary" style="width: 100%;">🔎 Aplicar Filtros</button>
+        <button type="button" id="applyFilters" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">🔍 Aplicar Filtros</button>
       </div>
-      <!-- SALIDA DE ESTADÍSTICAS -->
       <div id="statsOutput"></div>
+    </div>
+
+  </div>
+  <!-- fin adminPanel -->
+
+  <!-- Modal: Crear/Editar Categoría -->
+  <div id="categoryModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">🏷️ Nueva Categoría</h3>
+        <button type="button" class="modal-close" id="closeCategoryModal">✕</button>
+      </div>
+      <form id="categoryForm" class="modal-form">
+        <input type="hidden" id="categoryId" value="">
+        <div class="form-group">
+          <label for="categoryTitle">Nombre de la categoría</label>
+          <input type="text" id="categoryTitle" placeholder="Ej: Empanadas Premium" required>
+        </div>
+        <div class="form-group">
+          <label for="categorySlug">Slug (identificador interno)</label>
+          <input type="text" id="categorySlug" placeholder="ej-empanadas-premium" required>
+          <small style="color: var(--gray); font-size: 0.8rem;">Solo letras minúsculas, números y guiones. Se genera automáticamente.</small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelCategoryEdit">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="categorySubmitBtn">Guardar Categoría</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear/Editar Producto -->
+  <div id="productModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="productModalTitle">📦 Nuevo Producto</h3>
+        <button type="button" class="modal-close" id="closeProductModal">✕</button>
+      </div>
+      <form id="productForm" class="modal-form">
+        <input type="hidden" id="productId" value="">
+        <div class="form-group">
+          <label for="productCategory">Categoría</label>
+          <select id="productCategory" required></select>
+        </div>
+        <div class="form-group">
+          <label for="productName">Nombre del producto</label>
+          <input type="text" id="productName" placeholder="Ej: Empanada de carne" required>
+        </div>
+        <div class="form-group">
+          <label for="productDescription">Descripción</label>
+          <textarea id="productDescription" rows="3" placeholder="Describe el producto brevemente..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="productPrice">Precio ($)</label>
+          <input type="number" id="productPrice" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+        <input type="hidden" id="productImage">
+        <div class="form-group">
+          <label for="productImageFile">Imagen del producto</label>
+          <input type="file" id="productImageFile" accept="image/*">
+          <div class="image-preview-wrapper">
+            <img id="productImagePreview" src="img/logo.png" alt="Vista previa del producto">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Opciones</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" id="productAvailable">
+              <span>Disponible para la venta</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="is_combo">
+              <span>🔥 Es un combo</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelEdit">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -171,13 +230,11 @@
 
     <!-- Menú Principal -->
     <section id="menu">
-      <!-- Contenedor para resultados de búsqueda -->
       <div id="search-results-container" class="hidden">
         <h2 class="section-title">🔎 Resultados de búsqueda</h2>
         <div id="searchResultsGrid" class="menu-grid"></div>
         <p id="noResultsMsg" class="hidden" style="text-align:center; color:var(--gray); padding:2rem;">No se encontraron productos con ese nombre.</p>
       </div>
-
       <div id="menu-categories"></div>
     </section>
 
@@ -185,7 +242,6 @@
     <section id="pedido" class="pedido-section">
       <h2 class="section-title">🛒 Tu Pedido</h2>
       
-      <!-- Carrito -->
       <div id="cart" class="cart-container">
         <div class="cart-empty">Tu carrito está vacío. ¡Agrega productos del menú!</div>
         <div id="cartItems" class="cart-items hidden"></div>
@@ -194,30 +250,22 @@
         </div>
       </div>
 
-      <!-- Métodos de Pedido -->
       <div id="paymentMethods" class="payment-methods hidden">
         <h3>📱 Pedido por WhatsApp</h3>
         
         <div class="payment-options">
-          <!-- Mercado Pago -->
           <div class="payment-card">
             <h4>Mercado Pago</h4>
             <p class="coming-soon">Habilitado próximamente.</p>
-            <button type="button" class="btn-payment btn-mercadopago" disabled>
-              Próximamente
-            </button>
+            <button type="button" class="btn-payment btn-mercadopago" disabled>Próximamente</button>
           </div>
 
-          <!-- PayPal -->
           <div class="payment-card">
             <h4>PayPal</h4>
             <p class="coming-soon">Habilitado próximamente.</p>
-            <button type="button" class="btn-payment btn-paypal" disabled>
-              Próximamente
-            </button>
+            <button type="button" class="btn-payment btn-paypal" disabled>Próximamente</button>
           </div>
 
-          <!-- Pedido por WhatsApp -->
           <div class="payment-card">
             <h4>Pedido por WhatsApp</h4>
             <p>Haz tu pedido directo al WhatsApp de Q'Bacano.</p>
@@ -284,7 +332,7 @@
     <!-- Modal de PayPal -->
     <div id="paypal-modal" class="paypal-modal" style="display: none;">
       <div class="paypal-modal-content">
-        <button class="paypal-close-btn" data-action="close-paypal-modal" aria-label="Cerrar modal">×</button>
+        <button class="paypal-close-btn" data-action="close-paypal-modal" aria-label="Cerrar modal">✕</button>
         <div class="paypal-modal-header">
           <h3>Pagar con PayPal</h3>
           <p>Completa tu pago de forma segura</p>
@@ -295,7 +343,7 @@
 
   </main>
 
-  <!-- Footer -->
+  <!-- Ubicación -->
   <section id="ubicacion" class="ubicacion-section">
     <h2 class="section-title">📍 Visítanos</h2>
     <div class="ubicacion-grid">

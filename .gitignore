@@ -1,0 +1,37 @@
+# ===== DEPENDENCIAS =====
+node_modules/
+
+# ===== VARIABLES DE ENTORNO (NUNCA SUBIR) =====
+.env
+.env.local
+.env.production
+.env.*.local
+backend/.env
+frontend/.env
+
+# ===== ARCHIVOS CON CREDENCIALES =====
+frontend/config.js
+config.production.js
+config.local.js
+
+# ===== BUILD / COMPILADOS =====
+dist/
+build/
+*.tsbuildinfo
+
+# ===== LOGS =====
+*.log
+npm-debug.log*
+
+# ===== EDITOR =====
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== SISTEMA OPERATIVO =====
+.DS_Store
+Thumbs.db
+
+# ===== CACHÉ =====
+.cache/

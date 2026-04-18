@@ -20,6 +20,14 @@ export class ProductsService {
     );
   }
 
+  private formatProduct(item: any) {
+    return {
+      ...item,
+      category: item.categories?.slug || item.category || 'uncategorized',
+      category_data: item.categories || null,
+    };
+  }
+
   private async getActiveCategorySlugs(): Promise<Set<string> | null> {
     const { data, error } = await this.supabase
       .from('categories')
@@ -68,24 +76,27 @@ export class ProductsService {
       return item.categories && activeCategorySlugs.has(String(item.categories.slug));
     });
     
-    return filteredData.map(item => ({
-      ...item,
-      category: item.categories?.slug || 'uncategorized',
-      category_data: item.categories
-    }));
+    return filteredData.map((item) => this.formatProduct(item));
   }
 
   async findById(id: string) {
     const { data, error } = await this.supabase
       .from('products')
-      .select('*')
+      .select(`
+        *,
+        categories!fk_products_category (
+          slug,
+          title,
+          is_active
+        )
+      `)
       .eq('id', id)
       .single();
 
     if (error || !data) {
       throw new NotFoundException('Producto no encontrado');
     }
-    return data;
+    return this.formatProduct(data);
   }
 
   async search(query: string) {
@@ -112,11 +123,7 @@ export class ProductsService {
       return item.categories && activeCategorySlugs.has(String(item.categories.slug));
     });
     
-    return filteredData.map(item => ({
-      ...item,
-      category: item.categories?.slug || 'uncategorized',
-      category_data: item.categories
-    }));
+    return filteredData.map((item) => this.formatProduct(item));
   }
 
   async create(productData: CreateProductDto) {
@@ -142,6 +149,9 @@ export class ProductsService {
     if (productData.image_url) {
       insertPayload.image_url = productData.image_url;
     }
+    if (productData.image_public_id) {
+      insertPayload.image_public_id = productData.image_public_id;
+    }
 
     const { data, error } = await this.supabase
       .from('products')
@@ -152,7 +162,7 @@ export class ProductsService {
     if (error) {
       throw new InternalServerErrorException('No se pudo crear el producto');
     }
-    return data;
+    return this.findById(String(data.id));
   }
 
   async update(id: string, productData: UpdateProductDto) {
@@ -177,12 +187,13 @@ export class ProductsService {
       price: productData.price,
       available: productData.available,
       is_combo: productData.is_combo,
+      image_public_id: productData.image_public_id,
     };
     
     if (categoryId !== undefined) {
       updatePayload.category_id = categoryId;
     }
-    if (productData.image_url) {
+    if (productData.image_url !== undefined) {
       updatePayload.image_url = productData.image_url;
     }
 
@@ -196,7 +207,7 @@ export class ProductsService {
     if (error || !data) {
       throw new NotFoundException('No se pudo actualizar el producto');
     }
-    return data;
+    return this.findById(String(data.id));
   }
 
   async updateAvailability(id: string, available: boolean) {

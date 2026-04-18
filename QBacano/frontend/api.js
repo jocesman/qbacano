@@ -98,7 +98,7 @@ export async function deleteProduct(id) {
 // ===== ÓRDENES =====
 export async function fetchOrders(filters = {}) {
   const params = new URLSearchParams();
-  if (filters.status) params.append('status', filters.status);
+  if (filters.status && filters.status !== 'all') params.append('status', filters.status);
   if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
   if (filters.dateTo) params.append('dateTo', filters.dateTo);
   
