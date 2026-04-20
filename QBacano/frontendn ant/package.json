@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1"
+  },
+  "name": "qbacano",
+  "version": "1.0.0",
+  "main": "app.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

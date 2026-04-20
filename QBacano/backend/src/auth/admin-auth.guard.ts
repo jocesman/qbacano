@@ -1,35 +1,25 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AdminAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    const req = context.switchToHttp().getRequest();
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token de administrador requerido');
-    }
+    const auth = req.headers.authorization;
 
-    const token = authHeader.slice(7).trim();
+    if (!auth) return false;
+
+    const token = auth.split(' ')[1];
 
     try {
-      const payload = this.jwtService.verify<{ role?: string }>(token);
-      if (payload?.role !== 'admin') {
-        throw new UnauthorizedException('Permisos insuficientes');
-      }
-
-      request.admin = payload;
+      const payload = this.jwtService.verify(token);
+      req.user = payload;
       return true;
     } catch {
-      throw new UnauthorizedException('Token inválido o expirado');
+      return false;
     }
   }
 }

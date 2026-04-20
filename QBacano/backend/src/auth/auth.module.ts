@@ -1,23 +1,19 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { SharedJwtModule } from '../shared/jwt.module';
 import { AdminAuthGuard } from './admin-auth.guard';
 
 @Module({
-  imports: [
-    ConfigModule,
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('app.auth.jwtSecret'),
-        signOptions: {
-          expiresIn: (configService.get<string>('app.auth.jwtExpiresIn') ||
-            '10m') as never,
-        },
-      }),
-    }),
+  imports: [SharedJwtModule], // 🔥 usamos el compartido
+  controllers: [AuthController],
+  providers: [
+    AuthService,
+    AdminAuthGuard, // 🔥 registramos el guard
   ],
-  providers: [AdminAuthGuard],
-  exports: [JwtModule, AdminAuthGuard],
+  exports: [
+    AdminAuthGuard, // 🔥 lo hacemos usable en otros módulos
+    SharedJwtModule, // 🔥 exportamos JWT también
+  ],
 })
 export class AuthModule {}
