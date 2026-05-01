@@ -14,8 +14,8 @@ export declare class ProductsController {
         id: string;
         createdAt: Date;
         active: boolean;
-        storeId: string;
         price: import("@prisma/client/runtime/library").Decimal;
+        storeId: string;
         stock: number;
     })[]>;
     findOne(id: string): Promise<{
@@ -31,8 +31,8 @@ export declare class ProductsController {
         id: string;
         createdAt: Date;
         active: boolean;
-        storeId: string;
         price: import("@prisma/client/runtime/library").Decimal;
+        storeId: string;
         stock: number;
     }>;
     create(dto: CreateProductDto): Promise<{
@@ -40,8 +40,8 @@ export declare class ProductsController {
         id: string;
         createdAt: Date;
         active: boolean;
-        storeId: string;
         price: import("@prisma/client/runtime/library").Decimal;
+        storeId: string;
         stock: number;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
@@ -49,8 +49,8 @@ export declare class ProductsController {
         id: string;
         createdAt: Date;
         active: boolean;
-        storeId: string;
         price: import("@prisma/client/runtime/library").Decimal;
+        storeId: string;
         stock: number;
     }>;
     remove(id: string): Promise<{
@@ -58,8 +58,8 @@ export declare class ProductsController {
         id: string;
         createdAt: Date;
         active: boolean;
-        storeId: string;
         price: import("@prisma/client/runtime/library").Decimal;
+        storeId: string;
         stock: number;
     }>;
 }

@@ -19,8 +19,8 @@ export declare class CartController {
                 id: string;
                 createdAt: Date;
                 active: boolean;
-                storeId: string;
                 price: import("@prisma/client/runtime/library").Decimal;
+                storeId: string;
                 stock: number;
             };
         } & {
